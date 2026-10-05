@@ -36,25 +36,13 @@ export const useGameMetaStore = create<GameMetaState>()(
 export const useGameFinishSubscription = () => {
   useEffect(() => {
     let prevFinished = false;
-    let subscriptionCount = 0;
 
     const unsubscribe = useGameStateStore.subscribe((state) => {
-      subscriptionCount++;
       const finished = isGameFinished(state);
       const metaState = useGameMetaStore.getState();
 
-      // Debug logging
-      console.log(`Subscription call #${subscriptionCount}:`, {
-        finished,
-        prevFinished,
-        gameFinishedAt: metaState.gameFinishedAt,
-        shouldFinish:
-          finished && !prevFinished && metaState.gameFinishedAt === 0,
-      });
-
       // Only update when the game transitions to finished state
       if (finished && !prevFinished && metaState.gameFinishedAt === 0) {
-        console.log("Calling finishGame()");
         metaState.finishGame();
       }
 

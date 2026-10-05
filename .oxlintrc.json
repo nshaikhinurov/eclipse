@@ -5,6 +5,7 @@
     "correctness": "error"
   },
   "rules": {
+    "no-console": "error",
     "react/rules-of-hooks": "error",
     "react/exhaustive-deps": "warn",
     "react/set-state-in-effect": "error",

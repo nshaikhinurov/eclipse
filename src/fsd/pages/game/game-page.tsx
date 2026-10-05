@@ -33,7 +33,6 @@ export const GamePage = () => {
   const gameStartedAt = useGameStartedAt();
   const gameFinishedAt = useGameFinishedAt();
   const gameStatus = gameFinishedAt > 0 ? "finished" : "playing";
-  console.log("🚀 ~ GamePage ~ GamePage rendered");
 
   const shouldDisplayTimer = useShouldDisplayTimer();
   const canUndo = useCanUndo();
