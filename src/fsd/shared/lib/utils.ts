@@ -16,9 +16,12 @@ export const formatElapsedTime = (elapsedMilliseconds: number): string => {
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
-  return `${hours}:${String(minutes).padStart(2, "0")}:${String(
-    seconds,
-  ).padStart(2, "0")}`;
+  const pad = (value: number) => String(value).padStart(2, "0");
+
+  // Часы показываем, только когда партия длится дольше часа
+  return hours > 0
+    ? `${hours}:${pad(minutes)}:${pad(seconds)}`
+    : `${pad(minutes)}:${pad(seconds)}`;
 };
 
 /**

@@ -17,11 +17,11 @@ export const Timer = () => {
 
   const isRunning = isClient && gameStartedAt > 0 && gameFinishedAt === 0;
 
-  // Тикаем раз в секунду, только пока игра активна
+  // Тикаем чаще секунды, чтобы цифра менялась вовремя, — только пока игра активна
   useEffect(() => {
     if (!isRunning) return;
 
-    const interval = setInterval(() => setNow(Date.now()), 1000);
+    const interval = setInterval(() => setNow(Date.now()), 250);
 
     return () => clearInterval(interval);
   }, [isRunning]);

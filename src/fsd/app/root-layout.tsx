@@ -10,7 +10,7 @@ const manrope = Manrope({
 
 const windSong = WindSong({
   variable: "--font-windsong",
-  weight: "500",
+  weight: "400",
   subsets: ["latin"],
 });
 

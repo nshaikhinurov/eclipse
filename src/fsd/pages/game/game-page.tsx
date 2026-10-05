@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { pickRandom } from "~/fsd/shared/lib/utils";
 import {
   Eraser,
@@ -14,12 +15,12 @@ import {
   useCanUndo,
   useGameFinishedAt,
   useGameFinishSubscription,
+  useGameMetaStore,
   useGameStartedAt,
   useGameStateStore,
   useShouldDisplayTimer,
 } from "~/fsd/app/stores";
 import { Button } from "~/fsd/shared/ui/button";
-import { BalanceScale } from "./ui/balance-scale";
 import { Board } from "./ui/board";
 import { congratulations } from "./ui/congratulations";
 import { GameInstructions } from "./ui/game-instructions";
@@ -30,6 +31,12 @@ import { Timer } from "./ui/timer";
 export const GamePage = () => {
   // Set up game finish detection
   useGameFinishSubscription();
+
+  // Засекаем время первой партии при открытии страницы
+  useEffect(() => {
+    const { gameStartedAt, startGame } = useGameMetaStore.getState();
+    if (gameStartedAt === 0) startGame();
+  }, []);
 
   const gameStartedAt = useGameStartedAt();
   const gameFinishedAt = useGameFinishedAt();
@@ -72,8 +79,6 @@ export const GamePage = () => {
       </div>
 
       <Header />
-
-      <BalanceScale />
 
       <Board key={gameStartedAt} />
 
