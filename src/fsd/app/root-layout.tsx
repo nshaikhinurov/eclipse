@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import { Manrope, WindSong } from "next/font/google";
 import { Starfield } from "~/fsd/shared/ui/starfield";
+import { ServiceWorker } from "./service-worker";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -32,8 +33,9 @@ export const RootLayout = ({
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       </head>
       <body className={`${manrope.variable} ${windSong.variable} antialiased`}>
+        <ServiceWorker />
         <Starfield />
-        <div className="flex min-h-svh flex-col items-center overflow-clip px-4 py-4">
+        <div className="flex min-h-svh flex-col items-center overflow-clip pt-[max(1rem,env(safe-area-inset-top))] pr-[max(1rem,env(safe-area-inset-right))] pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))]">
           {children}
         </div>
       </body>
