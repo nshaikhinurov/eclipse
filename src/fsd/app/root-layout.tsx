@@ -1,15 +1,16 @@
 "use client";
 
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Manrope, WindSong } from "next/font/google";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const manrope = Manrope({
+  variable: "--font-manrope",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const windSong = WindSong({
+  variable: "--font-windsong",
+  weight: "500",
   subsets: ["latin"],
 });
 
@@ -30,9 +31,9 @@ export const RootLayout = ({
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} overflow-y-scroll antialiased`}
+        className={`${manrope.variable} ${windSong.variable} overflow-y-scroll antialiased`}
       >
-        <div className="flex min-h-screen flex-col items-center bg-stone-200 sm:p-8">
+        <div className="flex min-h-screen flex-col items-center px-4 pt-[22px] pb-[60px]">
           {children}
         </div>
       </body>

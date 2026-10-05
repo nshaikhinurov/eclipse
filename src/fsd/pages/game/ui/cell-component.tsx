@@ -1,10 +1,10 @@
 import cn from "clsx";
 import { AnimatePresence, motion } from "motion/react";
-import Image from "next/image";
 import { useState } from "react";
 import { useCell, useGameStateStore } from "~/fsd/app/stores";
 import { useIsClient } from "~/fsd/shared/hooks/use-is-client";
 import { CellValue } from "../model";
+import { MoonGlyph, SunGlyph } from "./glyphs";
 
 export const CellComponent = ({
   id,
@@ -25,15 +25,12 @@ export const CellComponent = ({
   return (
     <motion.div
       className={cn(
-        "box-border flex items-center justify-center border-[1px] border-stone-300 bg-stone-50",
+        "relative flex aspect-square items-center justify-center rounded-full",
         {
-          "rounded-tl-[6px]": id === 0,
-          "rounded-tr-[6px]": id === 5,
-          "rounded-bl-[6px]": id === 30,
-          "rounded-br-[6px]": id === 35,
-          "cursor-not-allowed bg-stone-200": isClient && isLocked,
-          "cursor-pointer transition hover:bg-stone-100 active:scale-90":
+          "bg-lilac/12": isClient && isLocked,
+          "cursor-pointer bg-white/4 inset-ring inset-ring-lilac/18 transition hover:bg-white/9 hover:inset-ring-lilac/40 active:scale-90":
             isClient && !isLocked,
+          "bg-white/4 inset-ring inset-ring-lilac/18": !isClient,
         },
       )}
       initial={{ opacity: 0, scale: 1 }}
@@ -44,17 +41,21 @@ export const CellComponent = ({
         {isClient && cellValue !== null && (
           <motion.div
             key={cellValue}
-            className="absolute"
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
+            className={cn(
+              "absolute inset-[7%]",
+              cellValue === 1
+                ? "drop-shadow-[0_0_8px_rgb(246_168_99/0.55)]"
+                : "drop-shadow-[0_0_8px_rgb(201_179_247/0.5)]",
+            )}
+            initial={{ opacity: 0, scale: 0.5, rotate: -20 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
             exit={{ opacity: 0, scale: 0.7 }}
           >
-            <Image
-              src={cellValue === 1 ? "/sun.svg" : "/moon.svg"}
-              alt={cellValue === 1 ? "Sun" : "Moon"}
-              width={32}
-              height={32}
-            />
+            {cellValue === 1 ? (
+              <SunGlyph className="size-full" />
+            ) : (
+              <MoonGlyph className="size-full" />
+            )}
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,10 +1,10 @@
-import cn from "clsx";
-import { FaGear, FaListCheck, FaRegClock } from "react-icons/fa6";
+import { Clock, ListChecks, Settings2 } from "lucide-react";
 import {
   useSettingsStore,
   useShouldDisplayErrors,
   useShouldDisplayTimer,
 } from "~/fsd/app/stores";
+import { buttonVariants } from "~/fsd/shared/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,11 +15,7 @@ import {
 import { Label } from "~/fsd/shared/ui/label";
 import { Switch } from "~/fsd/shared/ui/switch";
 
-type SettingsMenuProps = {
-  triggerClassName?: string;
-};
-
-export const SettingsMenu = ({ triggerClassName }: SettingsMenuProps) => {
+export const SettingsMenu = () => {
   const shouldDisplayTimer = useShouldDisplayTimer();
   const shouldDisplayErrors = useShouldDisplayErrors();
   const { toggleTimerDisplay, toggleErrorDisplay } = useSettingsStore();
@@ -27,14 +23,12 @@ export const SettingsMenu = ({ triggerClassName }: SettingsMenuProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className={cn(
-          triggerClassName,
-          "text-neutral-700 transition-all duration-250 ease-in-out hover:text-black",
-        )}
+        className={buttonVariants({ size: "icon" })}
+        aria-label="Settings"
       >
-        <FaGear />
+        <Settings2 />
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56">
+      <DropdownMenuContent align="end" className="w-56 rounded-2xl">
         <DropdownMenuGroup>
           <DropdownMenuItem
             onSelect={(e: Event) => {
@@ -42,7 +36,7 @@ export const SettingsMenu = ({ triggerClassName }: SettingsMenuProps) => {
               toggleTimerDisplay();
             }}
           >
-            <FaRegClock />
+            <Clock />
             <span className="grow">Show clock</span>
             <div className="flex items-center space-x-2">
               <Label htmlFor="show-clock-mode">
@@ -61,7 +55,7 @@ export const SettingsMenu = ({ triggerClassName }: SettingsMenuProps) => {
               toggleErrorDisplay();
             }}
           >
-            <FaListCheck />
+            <ListChecks />
             <span className="grow">Auto-check</span>
             <div className="flex items-center space-x-2">
               <Label htmlFor="auto-check-mode">

@@ -2,13 +2,13 @@
 
 import { pickRandom } from "~/fsd/shared/lib/utils";
 import {
-  FaArrowLeft,
-  FaBolt,
-  FaBrain,
-  FaBroom,
-  FaLightbulb,
-  FaRotateRight,
-} from "react-icons/fa6";
+  Eraser,
+  Lightbulb,
+  RotateCcw,
+  Sparkles,
+  Undo2,
+  WandSparkles,
+} from "lucide-react";
 import {
   restartGame,
   useCanUndo,
@@ -19,6 +19,7 @@ import {
   useShouldDisplayTimer,
 } from "~/fsd/app/stores";
 import { Button } from "~/fsd/shared/ui/button";
+import { BalanceScale } from "./ui/balance-scale";
 import { Board } from "./ui/board";
 import { congratulations } from "./ui/congratulations";
 import { GameInstructions } from "./ui/game-instructions";
@@ -58,49 +59,58 @@ export const GamePage = () => {
   const randomCongratulation = pickRandom(congratulations);
 
   return (
-    <main className="flex w-full max-w-[400px] flex-col items-stretch gap-4 rounded-md bg-stone-100 p-4 text-black sm:w-[452px]">
-      <Header
-        actionsSlot={<SettingsMenu triggerClassName="absolute top-0 right-0" />}
-      />
+    <main className="flex w-full max-w-[420px] flex-col items-stretch gap-5">
+      <div className="flex items-center justify-between text-[13px] font-bold tracking-[0.14em] text-haze">
+        <Button size="icon" onClick={handleRestartClick} aria-label="Restart">
+          <RotateCcw />
+        </Button>
+        <div className="flex items-center gap-2.5 tabular-nums">
+          <span>No. 976</span>
+          {shouldDisplayTimer && <Timer key={gameStartedAt} />}
+        </div>
+        <SettingsMenu />
+      </div>
 
-      <>
-        <div className="grid grid-cols-3 grid-rows-1 items-center justify-center gap-2 font-semibold">
-          <div className="text-center">Puzzle #976</div>
-          <div className="flex items-center justify-center gap-2">
-            {shouldDisplayTimer && <Timer key={gameStartedAt} />}
-          </div>
-          <Button onClick={handleRestartClick}>
-            <FaRotateRight /> Restart
+      <Header />
+
+      <BalanceScale />
+
+      <Board key={gameStartedAt} />
+
+      {gameStatus === "playing" && (
+        <div className="grid grid-cols-4 gap-2.5">
+          <Button onClick={handleUndoClick} disabled={!canUndo}>
+            <Undo2 />
+            Undo
+          </Button>
+          <Button variant="accent">
+            <Lightbulb />
+            Hint
+          </Button>
+          <Button onClick={handleClearClick} disabled={!canUndo}>
+            <Eraser />
+            Clear
+          </Button>
+          <Button onClick={handleSolveClick}>
+            <WandSparkles />
+            Solve
           </Button>
         </div>
-
-        <Board key={gameStartedAt} />
-
-        {gameStatus === "playing" && (
-          <div className="grid grid-cols-2 gap-2">
-            <Button onClick={handleUndoClick} disabled={!canUndo}>
-              <FaArrowLeft />
-              Undo
-            </Button>
-            <Button>
-              <FaLightbulb /> Hint
-            </Button>
-            <Button onClick={handleClearClick} disabled={!canUndo}>
-              <FaBroom /> Clear
-            </Button>
-            <Button onClick={handleSolveClick}>
-              <FaBolt /> Solve
-            </Button>
-          </div>
-        )}
-      </>
+      )}
 
       {gameStatus === "finished" && (
-        <div className="flex flex-col items-center justify-center gap-4 text-center">
-          <h2 className="text-2xl font-bold">{randomCongratulation.title}</h2>
-          <p className="text-lg">{randomCongratulation.subtitle}</p>
-          <Button onClick={handleRestartClick}>
-            <FaBrain /> Play Again
+        <div className="flex flex-col items-center justify-center gap-3 text-center">
+          <h2 className="text-2xl font-extrabold text-white">
+            {randomCongratulation.title}
+          </h2>
+          <p className="text-mist">{randomCongratulation.subtitle}</p>
+          <Button
+            variant="accent"
+            size="pill"
+            className="mt-2"
+            onClick={handleRestartClick}
+          >
+            <Sparkles /> Play Again
           </Button>
         </div>
       )}

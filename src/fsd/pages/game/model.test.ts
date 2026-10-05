@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   getNextValue,
+  getLineBalance,
   generateAllValidBoards,
   isValidSolution,
   generateBoard,
@@ -16,6 +17,29 @@ describe("getNextValue", () => {
     expect(getNextValue(null)).toBe(0);
     expect(getNextValue(0)).toBe(1);
     expect(getNextValue(1)).toBe(null);
+  });
+});
+
+// Test sun/moon counting per row and column
+describe("getLineBalance", () => {
+  it("counts suns and moons in every row and column, ignoring empty cells", () => {
+    const board: Board = [
+      [1, 0, null],
+      [1, null, null],
+      [0, 0, 1],
+    ];
+    expect(getLineBalance(board)).toEqual({
+      rows: [
+        { suns: 1, moons: 1 },
+        { suns: 1, moons: 0 },
+        { suns: 1, moons: 2 },
+      ],
+      cols: [
+        { suns: 2, moons: 1 },
+        { suns: 0, moons: 2 },
+        { suns: 1, moons: 0 },
+      ],
+    });
   });
 });
 

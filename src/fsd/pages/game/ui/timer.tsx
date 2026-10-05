@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FaRegClock } from "react-icons/fa6";
+import { Clock } from "lucide-react";
 import {
   useGameFinishedAt,
   useGameStartedAt,
@@ -43,9 +43,9 @@ export const Timer = () => {
   }
 
   return (
-    <div className="flex items-center justify-center gap-1">
-      <FaRegClock />
+    <span className="inline-flex items-center gap-2.5">
+      <Clock className="size-4 text-peach" />
       <span>{timerString}</span>
-    </div>
+    </span>
   );
 };
