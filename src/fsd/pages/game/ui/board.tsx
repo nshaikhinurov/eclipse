@@ -28,7 +28,7 @@ export const Board = ({ className }: { className?: string }) => {
   return (
     <div
       className={cn(
-        "grid grid-cols-[1fr_1.125rem] grid-rows-[auto_1.125rem] gap-2 rounded-[1.625rem] border border-lilac/14 bg-white/[0.035] p-3.5 select-none",
+        "grid grid-cols-[1fr_1.125rem] grid-rows-[auto_1.125rem] gap-2 rounded-[1.625rem] border border-lilac/14 bg-white/[0.035] p-3.5",
         className,
       )}
     >

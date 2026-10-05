@@ -135,9 +135,11 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply text-foreground font-sans;
+    @apply text-foreground font-sans select-none;
     /* Звёзды рисует <Starfield />, свечение над эмблемой — <Header /> */
     background: var(--background);
+    /* Игра, а не документ: без выделения текста и меню долгого тапа на iOS */
+    -webkit-touch-callout: none;
   }
 }
 
