@@ -1,4 +1,4 @@
-import { Clock, ListChecks, Settings2 } from "lucide-react";
+import { Clock, ListChecks, Settings2, type LucideIcon } from "lucide-react";
 import {
   useSettingsStore,
   useShouldDisplayErrors,
@@ -12,8 +12,44 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/fsd/shared/ui/dropdown-menu";
-import { Label } from "~/fsd/shared/ui/label";
 import { Switch } from "~/fsd/shared/ui/switch";
+
+type ToggleItemProps = {
+  icon: LucideIcon;
+  label: string;
+  checked: boolean;
+  onToggle: () => void;
+};
+
+// Переключает весь пункт меню; Switch только показывает состояние —
+// иначе его клик всплывает в onSelect и настройка переключается дважды
+const ToggleItem = ({
+  icon: Icon,
+  label,
+  checked,
+  onToggle,
+}: ToggleItemProps) => (
+  <DropdownMenuItem
+    role="menuitemcheckbox"
+    aria-checked={checked}
+    // Радиус рамки минус её border и padding — углы идут концентрично
+    className="rounded-[calc(var(--radius-2xl)-var(--spacing)-1px)]"
+    onSelect={(e: Event) => {
+      e.preventDefault();
+      onToggle();
+    }}
+  >
+    <Icon />
+    <span className="grow">{label}</span>
+    <span className="text-sm font-medium">{checked ? "On" : "Off"}</span>
+    <Switch
+      checked={checked}
+      tabIndex={-1}
+      aria-hidden
+      className="pointer-events-none"
+    />
+  </DropdownMenuItem>
+);
 
 export const SettingsMenu = () => {
   const shouldDisplayTimer = useShouldDisplayTimer();
@@ -30,44 +66,18 @@ export const SettingsMenu = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 rounded-2xl">
         <DropdownMenuGroup>
-          <DropdownMenuItem
-            onSelect={(e: Event) => {
-              e.preventDefault();
-              toggleTimerDisplay();
-            }}
-          >
-            <Clock />
-            <span className="grow">Show clock</span>
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="show-clock-mode">
-                {shouldDisplayTimer ? "On" : "Off"}
-              </Label>
-              <Switch
-                id="show-clock-mode"
-                checked={shouldDisplayTimer}
-                onCheckedChange={toggleTimerDisplay}
-              />
-            </div>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={(e: Event) => {
-              e.preventDefault();
-              toggleErrorDisplay();
-            }}
-          >
-            <ListChecks />
-            <span className="grow">Auto-check</span>
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="auto-check-mode">
-                {shouldDisplayErrors ? "On" : "Off"}
-              </Label>
-              <Switch
-                id="auto-check-mode"
-                checked={shouldDisplayErrors}
-                onCheckedChange={toggleErrorDisplay}
-              />
-            </div>
-          </DropdownMenuItem>
+          <ToggleItem
+            icon={Clock}
+            label="Show clock"
+            checked={shouldDisplayTimer}
+            onToggle={toggleTimerDisplay}
+          />
+          <ToggleItem
+            icon={ListChecks}
+            label="Auto-check"
+            checked={shouldDisplayErrors}
+            onToggle={toggleErrorDisplay}
+          />
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
