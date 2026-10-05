@@ -1,15 +1,10 @@
 import { useEffect, useState } from "react";
 import { Clock } from "lucide-react";
-import {
-  useGameFinishedAt,
-  useGameStartedAt,
-  useShouldDisplayTimer,
-} from "~/fsd/app/stores";
+import { useGameFinishedAt, useGameStartedAt } from "~/fsd/app/stores";
 import { useIsClient } from "~/fsd/shared/hooks/use-is-client";
 import { formatElapsedTime } from "~/fsd/shared/lib/utils";
 
 export const Timer = () => {
-  const shouldDisplayTimer = useShouldDisplayTimer();
   const gameStartedAt = useGameStartedAt();
   const gameFinishedAt = useGameFinishedAt();
   const isClient = useIsClient();
@@ -36,11 +31,6 @@ export const Timer = () => {
         : Math.max(0, now - gameStartedAt);
   }
   const timerString = formatElapsedTime(elapsedTime);
-
-  // Не показываем таймер если настройка отключена
-  if (!shouldDisplayTimer) {
-    return null;
-  }
 
   return (
     <span className="inline-flex items-center gap-2.5">

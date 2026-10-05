@@ -5,10 +5,12 @@ import {
   generateBoard,
   getNextValue,
   isValidSolution,
+  pickRandomPuzzleNumber,
   solve,
 } from "~/fsd/pages/game/model";
 
 type GameState = {
+  puzzleNumber: number;
   boardHistory: {
     ids: number[];
     entities: Record<number, Board | undefined>;
@@ -22,14 +24,18 @@ type GameState = {
 };
 
 // Helper function to generate initial game state
-const createInitialState = (initialBoard?: Board) => ({
-  boardHistory: {
-    ids: [1],
-    entities: {
-      1: initialBoard || generateBoard(),
-    } as Record<number, Board | undefined>,
-  },
-});
+const createInitialState = (initialBoard?: Board) => {
+  const puzzleNumber = pickRandomPuzzleNumber();
+  return {
+    puzzleNumber,
+    boardHistory: {
+      ids: [1],
+      entities: {
+        1: initialBoard || generateBoard(puzzleNumber),
+      } as Record<number, Board | undefined>,
+    },
+  };
+};
 
 // Create the game state store
 export const useGameStateStore = create<GameState>()(
@@ -152,3 +158,5 @@ export const useCell = (cellId: number) =>
   useGameStateStore((state) => getCell(state, cellId));
 export const useIsGameFinished = () => useGameStateStore(isGameFinished);
 export const useCanUndo = () => useGameStateStore(canUndo);
+export const usePuzzleNumber = () =>
+  useGameStateStore((state) => state.puzzleNumber);

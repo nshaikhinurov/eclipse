@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { pickRandom } from "~/fsd/shared/lib/utils";
+import { useIsClient } from "~/fsd/shared/hooks/use-is-client";
+import { cn, pickRandom } from "~/fsd/shared/lib/utils";
 import {
   Eraser,
   Lightbulb,
@@ -18,6 +19,7 @@ import {
   useGameMetaStore,
   useGameStartedAt,
   useGameStateStore,
+  usePuzzleNumber,
   useShouldDisplayTimer,
 } from "~/fsd/app/stores";
 import { Button } from "~/fsd/shared/ui/button";
@@ -40,9 +42,16 @@ export const GamePage = () => {
 
   const gameStartedAt = useGameStartedAt();
   const gameFinishedAt = useGameFinishedAt();
+  const puzzleNumber = usePuzzleNumber();
   const gameStatus = gameFinishedAt > 0 ? "finished" : "playing";
 
   const shouldDisplayTimer = useShouldDisplayTimer();
+  const isClient = useIsClient();
+  // Номер выбирается случайно, а настройки лежат в localStorage — сервер не знает ни того, ни другого.
+  // До старта партии на клиенте держим блок невидимым (место занято), а таймер рисуем как на сервере,
+  // чтобы гидратация совпала и шапка не прыгала
+  const isHeaderReady = isClient && gameStartedAt > 0;
+  const showTimer = isClient ? shouldDisplayTimer : true;
   const canUndo = useCanUndo();
 
   const { cellRestored, boardCleared, boardSolved } = useGameStateStore();
@@ -71,9 +80,16 @@ export const GamePage = () => {
         <Button size="icon" onClick={handleRestartClick} aria-label="Restart">
           <RotateCcw />
         </Button>
-        <div className="flex items-center gap-2.5 tabular-nums">
-          <span>No. 976</span>
-          {shouldDisplayTimer && <Timer key={gameStartedAt} />}
+        <div
+          className={cn(
+            "flex items-center gap-2.5 tabular-nums",
+            !isHeaderReady && "invisible",
+          )}
+        >
+          <span>
+            #{String(isHeaderReady ? puzzleNumber : 0).padStart(4, "0")}
+          </span>
+          {showTimer && <Timer key={gameStartedAt} />}
         </div>
         <SettingsMenu />
       </div>

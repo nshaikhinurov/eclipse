@@ -1,4 +1,4 @@
-import { pickRandom, shuffle, splitStringEvery } from "~/fsd/shared/lib/utils";
+import { shuffle, splitStringEvery } from "~/fsd/shared/lib/utils";
 import { validBoardsSerialized } from "./consts";
 import {
   arrangements,
@@ -39,9 +39,13 @@ export function getLineBalance(board: Board): {
   };
 }
 
-export const generateBoard = () => {
-  const randomSerializedBoard = pickRandom(validBoardsSerialized);
-  const randomSolution = splitStringEvery(6, randomSerializedBoard).map(
+// Номер головоломки — порядковый номер её решения в validBoardsSerialized (с 1)
+export const pickRandomPuzzleNumber = () =>
+  Math.floor(Math.random() * validBoardsSerialized.length) + 1;
+
+export const generateBoard = (puzzleNumber = pickRandomPuzzleNumber()) => {
+  const serializedSolution = validBoardsSerialized[puzzleNumber - 1];
+  const randomSolution = splitStringEvery(6, serializedSolution).map(
     (serializedLine) => {
       return splitStringEvery(1, serializedLine).map(Number);
     },
