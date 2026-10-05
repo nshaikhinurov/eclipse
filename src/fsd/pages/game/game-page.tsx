@@ -131,16 +131,20 @@ export const GamePage = () => {
 
       {gameStatus === "finished" && (
         // Поздравление занимает ту же сетку, что и кнопки, — высота экрана не меняется
-        <div className="grid grid-cols-4 gap-2.5 landscape-short:col-start-2 landscape-short:row-start-4">
-          <div className="col-span-3 flex flex-col justify-center gap-0.5">
-            <h2 className="text-lg leading-6 font-extrabold text-white">
+        <div className="grid grid-cols-[1fr_auto] gap-2.5 landscape-short:col-start-2 landscape-short:row-start-4">
+          <div className="flex flex-col justify-start gap-0.5">
+            <h2 className="text-lg leading-6 font-extrabold text-balance text-white">
               {randomCongratulation.title}
             </h2>
-            <p className="text-[0.8125rem] leading-[1.125rem] text-mist">
+            <p className="text-[0.8125rem] leading-[1.125rem] text-pretty text-mist">
               {randomCongratulation.subtitle}
             </p>
           </div>
-          <Button variant="accent" onClick={handleRestartClick}>
+          <Button
+            variant="accent"
+            className="px-4 whitespace-nowrap"
+            onClick={handleRestartClick}
+          >
             <Sparkles />
             Play Again
           </Button>

@@ -3,43 +3,43 @@ export const congratulations: {
   subtitle: string;
 }[] = [
   {
-    title: "Congratulations!",
-    subtitle: "You’ve solved the puzzle with brilliant ingenuity.",
+    title: "Nicely done!",
+    subtitle: "Every sun and moon found its place.",
   },
   {
-    title: "Well done!",
-    subtitle: "Your clever mind has unlocked the mystery.",
+    title: "Perfect balance",
+    subtitle: "Day and night, evenly matched.",
   },
   {
-    title: "Fantastic job!",
-    subtitle: "The puzzle was no match for your problem-solving skills.",
+    title: "Solved!",
+    subtitle: "The clues clicked, one by one.",
   },
   {
-    title: "Bravo!",
-    subtitle: "Your determination and wit have led you to victory.",
+    title: "Beautifully done",
+    subtitle: "The sky is in harmony again.",
   },
   {
-    title: "Excellent work!",
-    subtitle: "You’ve cracked the challenge with style.",
+    title: "You got it!",
+    subtitle: "Not a single guess needed — just clear thinking.",
   },
   {
-    title: "Amazing!",
-    subtitle: "Your strategic thinking has turned clues into triumph.",
+    title: "Well played",
+    subtitle: "Calm, steady, and spot on.",
   },
   {
-    title: "Hooray!",
-    subtitle: "Your intellect shines as you conquer the puzzle.",
+    title: "Lovely work",
+    subtitle: "Each row and column, perfectly in tune.",
   },
   {
-    title: "Victory is yours!",
-    subtitle: "You’ve outsmarted every twist and turn.",
+    title: "That’s the one!",
+    subtitle: "Suns and moons, all lined up just right.",
   },
   {
-    title: "Kudos!",
-    subtitle: "Your puzzle-solving prowess is truly inspiring.",
+    title: "Brilliant!",
+    subtitle: "You made that look easy.",
   },
   {
-    title: "Outstanding performance!",
-    subtitle: "You’ve mastered the puzzle with ease.",
+    title: "All aligned",
+    subtitle: "A perfect eclipse — nicely solved.",
   },
 ];
