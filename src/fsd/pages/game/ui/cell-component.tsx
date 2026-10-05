@@ -1,8 +1,9 @@
 import cn from "clsx";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useCell, useGameStateStore } from "~/fsd/app/stores";
+import { useIsClient } from "~/fsd/shared/hooks/use-is-client";
 import { CellValue } from "../model";
 
 export const CellComponent = ({
@@ -13,14 +14,9 @@ export const CellComponent = ({
   initialValue: CellValue;
 }) => {
   const [isLocked] = useState(initialValue !== null);
-  const [isClient, setIsClient] = useState(false);
+  const isClient = useIsClient();
   const { cellClicked } = useGameStateStore();
   const cellValue = useCell(id);
-
-  // Устанавливаем флаг что мы на клиенте
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const handleClick = () => {
     cellClicked(id);

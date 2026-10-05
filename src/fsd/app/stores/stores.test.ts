@@ -1,6 +1,13 @@
+import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { generateBoard } from "~/fsd/pages/game/model";
-import { useGameMetaStore, useGameStateStore, useSettingsStore } from "./index";
+import {
+  isGameFinished,
+  useGameFinishSubscription,
+  useGameMetaStore,
+  useGameStateStore,
+  useSettingsStore,
+} from "./index";
 
 // Reset all stores before each test
 beforeEach(() => {
@@ -36,11 +43,11 @@ describe("Game State Store", () => {
     // First cell that is empty (null)
     const emptyCellIndex =
       initialBoard?.flat().findIndex((cell) => cell === null) ?? -1;
-    if (emptyCellIndex >= 0) {
-      cellClicked(emptyCellIndex);
-      const newState = useGameStateStore.getState();
-      expect(newState.boardHistory.ids.length).toBe(initialHistoryLength + 1);
-    }
+    expect(emptyCellIndex).toBeGreaterThanOrEqual(0);
+
+    cellClicked(emptyCellIndex);
+    const newState = useGameStateStore.getState();
+    expect(newState.boardHistory.ids.length).toBe(initialHistoryLength + 1);
   });
 
   it("should allow going back in history with cellRestored", () => {
@@ -109,8 +116,13 @@ describe("Settings Store", () => {
 
 describe("Cross-store interactions", () => {
   it("should update game status when board is complete and valid", () => {
-    // This is a complex test that would require a solved board
-    // In a real implementation, we'd mock a solved board state
-    // and verify that the game is marked as finished
+    const { unmount } = renderHook(() => useGameFinishSubscription());
+    expect(useGameMetaStore.getState().gameFinishedAt).toBe(0);
+
+    act(() => useGameStateStore.getState().boardSolved());
+
+    expect(isGameFinished(useGameStateStore.getState())).toBe(true);
+    expect(useGameMetaStore.getState().gameFinishedAt).toBeGreaterThan(0);
+    unmount();
   });
 });

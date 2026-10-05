@@ -5,47 +5,37 @@ import {
   useGameStartedAt,
   useShouldDisplayTimer,
 } from "~/fsd/app/stores";
+import { useIsClient } from "~/fsd/shared/hooks/use-is-client";
 import { formatElapsedTime } from "~/fsd/shared/lib/utils";
 
 export const Timer = () => {
   const shouldDisplayTimer = useShouldDisplayTimer();
   const gameStartedAt = useGameStartedAt();
   const gameFinishedAt = useGameFinishedAt();
-  const [currentTime, setCurrentTime] = useState(0);
-  const [isClient, setIsClient] = useState(false);
+  const isClient = useIsClient();
+  const [now, setNow] = useState(0);
 
-  // Устанавливаем флаг что мы на клиенте
+  const isRunning = isClient && gameStartedAt > 0 && gameFinishedAt === 0;
+
+  // Тикаем раз в секунду, только пока игра активна
   useEffect(() => {
-    setIsClient(true);
-  }, []);
+    if (!isRunning) return;
 
-  // Обновляем текущее время каждую секунду, только если игра активна
-  useEffect(() => {
-    if (!isClient || gameStartedAt === 0) return;
-
-    // Если игра завершена, показываем финальное время
-    if (gameFinishedAt > 0) {
-      setCurrentTime(gameFinishedAt - gameStartedAt);
-      return;
-    }
-
-    // Обновляем время каждую секунду для активной игры
-    const updateTime = () => {
-      setCurrentTime(Date.now() - gameStartedAt);
-    };
-
-    // Обновляем сразу
-    updateTime();
-
-    // Затем каждую секунду
-    const interval = setInterval(updateTime, 1000);
+    const interval = setInterval(() => setNow(Date.now()), 1000);
 
     return () => clearInterval(interval);
-  }, [gameStartedAt, gameFinishedAt, isClient]);
+  }, [isRunning]);
 
-  // На сервере показываем дефолтное время
-  const displayTime = isClient ? currentTime : 0;
-  const timerString = formatElapsedTime(displayTime);
+  // На сервере и до старта игры показываем нулевое время,
+  // после завершения — финальное
+  let elapsedTime = 0;
+  if (isClient && gameStartedAt > 0) {
+    elapsedTime =
+      gameFinishedAt > 0
+        ? gameFinishedAt - gameStartedAt
+        : Math.max(0, now - gameStartedAt);
+  }
+  const timerString = formatElapsedTime(elapsedTime);
 
   // Не показываем таймер если настройка отключена
   if (!shouldDisplayTimer) {

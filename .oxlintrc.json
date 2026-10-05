@@ -7,9 +7,9 @@
   "rules": {
     "react/rules-of-hooks": "error",
     "react/exhaustive-deps": "warn",
-    "react/set-state-in-effect": "warn",
-    "vitest/no-conditional-expect": "warn",
-    "vitest/expect-expect": "warn"
+    "react/set-state-in-effect": "error",
+    "vitest/no-conditional-expect": "error",
+    "vitest/expect-expect": "error"
   },
   "ignorePatterns": [".next/**", "next-env.d.ts"]
 }
