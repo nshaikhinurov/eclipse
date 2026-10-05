@@ -2,6 +2,7 @@ import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { generateBoard } from "~/fsd/pages/game/model";
 import {
+  getCurrentBoard,
   isGameFinished,
   useGameFinishSubscription,
   useGameMetaStore,
@@ -68,6 +69,28 @@ describe("Game State Store", () => {
     expect(finalState.boardHistory.ids.length).toBe(
       historyLengthAfterClick - 1,
     );
+  });
+
+  it("should not change earlier boards when a cell is clicked", () => {
+    const initialBoard = useGameStateStore.getState().boardHistory.entities[1]!;
+    const emptyCells = initialBoard
+      .flat()
+      .flatMap((cell, index) => (cell === null ? [index] : []));
+    const snapshot = structuredClone(initialBoard);
+
+    useGameStateStore.getState().cellClicked(emptyCells[0]);
+    const afterFirstClick = structuredClone(
+      getCurrentBoard(useGameStateStore.getState()),
+    );
+    useGameStateStore.getState().cellClicked(emptyCells[1]);
+
+    useGameStateStore.getState().cellRestored();
+    expect(getCurrentBoard(useGameStateStore.getState())).toEqual(
+      afterFirstClick,
+    );
+
+    useGameStateStore.getState().boardCleared();
+    expect(getCurrentBoard(useGameStateStore.getState())).toEqual(snapshot);
   });
 });
 

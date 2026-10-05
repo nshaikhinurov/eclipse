@@ -61,11 +61,12 @@ export const useGameStateStore = create<GameState>()(
         const col = cellId % currentBoard.length;
 
         const clickedCellValue = currentBoard[row][col];
-        const nextCellValue = getNextValue(clickedCellValue); // With immer middleware, we can mutate the draft state directly
+        const nextCellValue = getNextValue(clickedCellValue);
+        // Копируем и строки: иначе они общие с прошлой доской, и ход попадёт в историю
+        const nextBoard = currentBoard.map((cells) => [...cells]);
+        nextBoard[row][col] = nextCellValue;
         state.boardHistory.ids.push(currentBoardId + 1);
-        state.boardHistory.entities[currentBoardId + 1] = [...currentBoard];
-        state.boardHistory.entities[currentBoardId + 1]![row][col] =
-          nextCellValue;
+        state.boardHistory.entities[currentBoardId + 1] = nextBoard;
       });
     },
 
