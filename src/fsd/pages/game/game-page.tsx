@@ -75,11 +75,15 @@ export const GamePage = () => {
   const randomCongratulation = pickRandom(congratulations);
 
   return (
-    <main className="flex w-full max-w-[420px] flex-col items-stretch gap-5">
-      <div className="flex items-center justify-between text-[13px] font-bold tracking-[0.14em] text-haze">
-        <Button size="icon" onClick={handleRestartClick} aria-label="Restart">
-          <RotateCcw />
-        </Button>
+    // В альбомной ориентации телефона: доска слева на всю высоту, остальное колонкой справа
+    <main className="flex w-[22.375rem] max-w-full flex-col items-stretch gap-4 landscape-short:grid landscape-short:w-[46.25rem] landscape-short:grid-cols-2 landscape-short:grid-rows-[auto_auto_1fr_auto] landscape-short:gap-x-6">
+      {/* Три колонки, чтобы номер с таймером стоял ровно по центру при разном числе кнопок по краям */}
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center text-[0.8125rem] font-bold tracking-[0.14em] text-haze landscape-short:col-start-2 landscape-short:row-start-1">
+        <div className="flex gap-2">
+          <Button size="icon" onClick={handleRestartClick} aria-label="Restart">
+            <RotateCcw />
+          </Button>
+        </div>
         <div
           className={cn(
             "flex items-center gap-2.5 tabular-nums",
@@ -91,15 +95,21 @@ export const GamePage = () => {
           </span>
           {showTimer && <Timer key={gameStartedAt} />}
         </div>
-        <SettingsMenu />
+        <div className="flex justify-end gap-2">
+          <GameInstructions />
+          <SettingsMenu />
+        </div>
       </div>
 
-      <Header />
+      <Header className="landscape-short:col-start-2 landscape-short:row-start-2" />
 
-      <Board key={gameStartedAt} />
+      <Board
+        key={gameStartedAt}
+        className="landscape-short:col-start-1 landscape-short:row-span-full"
+      />
 
       {gameStatus === "playing" && (
-        <div className="grid grid-cols-4 gap-2.5">
+        <div className="grid grid-cols-4 gap-2.5 landscape-short:col-start-2 landscape-short:row-start-4">
           <Button onClick={handleUndoClick} disabled={!canUndo}>
             <Undo2 />
             Undo
@@ -120,23 +130,22 @@ export const GamePage = () => {
       )}
 
       {gameStatus === "finished" && (
-        <div className="flex flex-col items-center justify-center gap-3 text-center">
-          <h2 className="text-2xl font-extrabold text-white">
-            {randomCongratulation.title}
-          </h2>
-          <p className="text-mist">{randomCongratulation.subtitle}</p>
-          <Button
-            variant="accent"
-            size="pill"
-            className="mt-2"
-            onClick={handleRestartClick}
-          >
-            <Sparkles /> Play Again
+        // Поздравление занимает ту же сетку, что и кнопки, — высота экрана не меняется
+        <div className="grid grid-cols-4 gap-2.5 landscape-short:col-start-2 landscape-short:row-start-4">
+          <div className="col-span-3 flex flex-col justify-center gap-0.5">
+            <h2 className="text-lg leading-6 font-extrabold text-white">
+              {randomCongratulation.title}
+            </h2>
+            <p className="text-[0.8125rem] leading-[1.125rem] text-mist">
+              {randomCongratulation.subtitle}
+            </p>
+          </div>
+          <Button variant="accent" onClick={handleRestartClick}>
+            <Sparkles />
+            Play Again
           </Button>
         </div>
       )}
-
-      <GameInstructions />
     </main>
   );
 };

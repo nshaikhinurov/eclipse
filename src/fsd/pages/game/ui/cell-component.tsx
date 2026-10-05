@@ -44,8 +44,8 @@ export const CellComponent = ({
             className={cn(
               "absolute inset-[7%]",
               cellValue === 1
-                ? "drop-shadow-[0_0_8px_rgb(246_168_99/0.55)]"
-                : "drop-shadow-[0_0_8px_rgb(201_179_247/0.5)]",
+                ? "drop-shadow-[0_0_0.5rem_rgb(246_168_99/0.55)]"
+                : "drop-shadow-[0_0_0.5rem_rgb(201_179_247/0.5)]",
             )}
             initial={{ opacity: 0, scale: 0.5, rotate: -20 }}
             animate={{ opacity: 1, scale: 1, rotate: 0 }}

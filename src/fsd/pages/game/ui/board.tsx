@@ -1,11 +1,12 @@
 import { useMemo } from "react";
 import { useCurrentBoard, useShouldDisplayErrors } from "~/fsd/app/stores";
 import { useIsClient } from "~/fsd/shared/hooks/use-is-client";
+import { cn } from "~/fsd/shared/lib/utils";
 import { getLineBalance } from "../model";
 import { CellComponent } from "./cell-component";
 import { LinePips } from "./line-pips";
 
-export const Board = () => {
+export const Board = ({ className }: { className?: string }) => {
   const currentBoard = useCurrentBoard();
   const shouldDisplayErrors = useShouldDisplayErrors();
   const isClient = useIsClient();
@@ -25,13 +26,18 @@ export const Board = () => {
   const half = (currentBoard?.length ?? 0) / 2;
 
   return (
-    <div className="grid grid-cols-[1fr_18px] grid-rows-[auto_18px] gap-2 rounded-[26px] border border-lilac/14 bg-white/[0.035] p-3.5 select-none">
-      <div className="grid aspect-square grid-cols-6 grid-rows-6 gap-[9px]">
+    <div
+      className={cn(
+        "grid grid-cols-[1fr_1.125rem] grid-rows-[auto_1.125rem] gap-2 rounded-[1.625rem] border border-lilac/14 bg-white/[0.035] p-3.5 select-none",
+        className,
+      )}
+    >
+      <div className="grid aspect-square grid-cols-6 grid-rows-6 gap-2.25">
         {cells.map((value, index) => (
           <CellComponent key={index} id={index} initialValue={value} />
         ))}
       </div>
-      <div className="grid grid-rows-6 gap-[9px]">
+      <div className="grid grid-rows-6 gap-2.25">
         {rows.map((balance, index) => (
           <LinePips
             key={index}
@@ -42,7 +48,7 @@ export const Board = () => {
           />
         ))}
       </div>
-      <div className="grid grid-cols-6 gap-[9px]">
+      <div className="grid grid-cols-6 gap-2.25">
         {cols.map((balance, index) => (
           <LinePips
             key={index}

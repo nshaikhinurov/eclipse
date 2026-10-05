@@ -13,9 +13,9 @@ export const buttonVariants = cva(
       },
       size: {
         // Плитка: иконка над подписью
-        tile: "flex-col gap-[7px] rounded-[18px] pt-[13px] pb-[11px] text-[10.5px] tracking-[0.16em] [&_svg]:size-5",
+        tile: "flex-col gap-[0.4375rem] rounded-[1.125rem] pt-[0.8125rem] pb-[0.6875rem] text-[0.65625rem] tracking-[0.16em] [&_svg]:size-5",
         pill: "gap-2 rounded-full px-6 py-3 text-xs tracking-[0.16em] [&_svg]:size-4",
-        icon: "size-[38px] shrink-0 rounded-full text-haze enabled:hover:text-white [&_svg]:size-[18px]",
+        icon: "size-9.5 shrink-0 rounded-full text-haze enabled:hover:text-white [&_svg]:size-4.5",
       },
     },
     defaultVariants: {

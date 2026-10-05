@@ -25,13 +25,13 @@ export const LinePips = ({
       <span
         key={index}
         className={cn(
-          "size-[5px] rounded-full transition-colors duration-250",
+          "size-[0.3125rem] rounded-full transition-colors duration-250",
           index < count
             ? isOverflown
               ? "bg-rose"
               : filledClassName
             : "bg-white/12",
-          isBalanced && "shadow-[0_0_6px_white]",
+          isBalanced && "shadow-[0_0_0.375rem_white]",
         )}
       />
     ));
@@ -39,10 +39,10 @@ export const LinePips = ({
   return (
     <div
       className={cn(
-        "grid place-content-center gap-[3px]",
+        "grid place-content-center gap-[0.1875rem]",
         direction === "row"
-          ? "grid-flow-col grid-cols-[repeat(2,5px)] grid-rows-[repeat(3,5px)]"
-          : "grid-cols-[repeat(3,5px)] grid-rows-[repeat(2,5px)]",
+          ? "grid-flow-col grid-cols-[repeat(2,0.3125rem)] grid-rows-[repeat(3,0.3125rem)]"
+          : "grid-cols-[repeat(3,0.3125rem)] grid-rows-[repeat(2,0.3125rem)]",
       )}
     >
       {renderPips(balance.suns, "bg-peach")}

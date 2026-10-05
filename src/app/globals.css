@@ -4,6 +4,9 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Телефон, повёрнутый боком: доска уезжает влево, остальное — в колонку справа */
+@custom-variant landscape-short (@media (orientation: landscape) and (max-height: 540px));
+
 :root {
   /* Палитра «Равновесие» */
   --night: #262159;
@@ -82,8 +85,6 @@
 
   --animate-collapsible-down: collapsible-down 0.2s ease-out;
   --animate-collapsible-up: collapsible-up 0.2s ease-out;
-  --animate-accordion-down: accordion-down 0.2s ease-out;
-  --animate-accordion-up: accordion-up 0.2s ease-out;
 
   @keyframes collapsible-down {
     from {
@@ -106,49 +107,66 @@
       opacity: 0;
     }
   }
-
-  @keyframes accordion-down {
-    from {
-      height: 0;
-      opacity: 0;
-    }
-    to {
-      height: var(--radix-accordion-content-height);
-      opacity: 1;
-    }
-  }
-
-  @keyframes accordion-up {
-    from {
-      height: var(--radix-accordion-content-height);
-      opacity: 1;
-    }
-    to {
-      height: 0;
-      opacity: 0;
-    }
-  }
 }
 
 @layer base {
+  /*
+   * Весь экран свёрстан в rem под макет --layout-w × --layout-h (в px при корневом шрифте 16px,
+   * с учётом внешних отступов). Корневой шрифт подбирается так, чтобы макет целиком влез
+   * во вьюпорт и был максимально крупным, — пропорции при этом сохраняются.
+   * svh, а не dvh: при сворачивании панелей мобильного браузера ничего не прыгает.
+   * Сверху ограничиваем, чтобы на больших мониторах игра не разрасталась бесконечно.
+   */
+  html {
+    --layout-w: 390;
+    --layout-h: 710;
+    font-size: min(
+      100vw * 16 / var(--layout-w),
+      100svh * 16 / var(--layout-h),
+      24px
+    );
+
+    @variant landscape-short {
+      --layout-w: 772;
+      --layout-h: 394;
+    }
+  }
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply text-foreground font-sans;
-    /* Мягкое свечение над эмблемой и редкие звёзды */
-    background:
-      radial-gradient(circle 420px at 50% 120px, rgb(169 169 251 / 0.28), transparent 70%),
-      radial-gradient(1px 1px at 30px 40px, rgb(255 255 255 / 0.7), transparent),
-      radial-gradient(1px 1px at 130px 150px, rgb(255 255 255 / 0.5), transparent),
-      radial-gradient(1.4px 1.4px at 200px 70px, rgb(255 255 255 / 0.6), transparent),
-      var(--background);
-    background-size:
-      auto,
-      230px 210px,
-      230px 210px,
-      230px 210px,
-      auto;
+    /* Звёзды рисует <Starfield />, свечение над эмблемой — <Header /> */
+    background: var(--background);
+  }
+}
+
+.star {
+  opacity: var(--star-opacity);
+  animation: twinkle var(--twinkle-duration) ease-in-out var(--twinkle-delay) infinite;
+}
+
+@keyframes twinkle {
+  50% {
+    opacity: calc(var(--star-opacity) * 0.25);
+    transform: scale(0.7);
+  }
+}
+
+.star-appear {
+  animation: star-appear var(--appear-duration) ease-out both;
+}
+
+@keyframes star-appear {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .star,
+  .star-appear {
+    animation: none;
   }
 }
 
