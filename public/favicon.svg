@@ -1,18 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <radialGradient id="sun" cx="35%" cy="30%" r="70%">
-      <stop offset="0" stop-color="#ffe2c2"/>
-      <stop offset=".6" stop-color="#f6a863"/>
-      <stop offset="1" stop-color="#e88a52"/>
-    </radialGradient>
     <radialGradient id="moon" cx="70%" cy="30%" r="70%">
       <stop offset="0" stop-color="#3b347f"/>
       <stop offset=".7" stop-color="#262159"/>
     </radialGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="1.6"/>
+    </filter>
   </defs>
   <rect width="64" height="64" rx="16" fill="#262159"/>
-  <circle cx="28" cy="36" r="17" fill="url(#sun)"/>
-  <circle cx="35" cy="31" r="17" fill="url(#moon)"/>
-  <path d="M42.4 15.7A17 17 0 0 1 51.6 28.4" fill="none" stroke="#c9b3f7" stroke-opacity=".7" stroke-width="1.6" stroke-linecap="round"/>
-  <path d="M51 7c.3 3 2.7 5.4 5.7 5.7-3 .3-5.4 2.7-5.7 5.7-.3-3-2.7-5.4-5.7-5.7 3-.3 5.4-2.7 5.7-5.7z" fill="#fff"/>
+  <circle cx="30" cy="34" r="20" fill="none" stroke="#f6a863" stroke-width="4" opacity=".75" filter="url(#glow)"/>
+  <circle cx="30" cy="34" r="20" fill="none" stroke="#ffe2c2" stroke-width="1.6"/>
+  <circle cx="30" cy="34" r="19.2" fill="url(#moon)"/>
+  <circle cx="44.1" cy="19.9" r="6.5" fill="#f6a863" filter="url(#glow)"/>
+  <circle cx="44.1" cy="19.9" r="2.6" fill="#fff"/>
+  <path d="M44.1 8.4c.33 6.1 5.4 11.17 11.5 11.5-6.1.33-11.17 5.4-11.5 11.5-.33-6.1-5.4-11.17-11.5-11.5 6.1-.33 11.17-5.4 11.5-11.5z" fill="#fff"/>
 </svg>
