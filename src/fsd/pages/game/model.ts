@@ -428,169 +428,180 @@ function generatePuzzle(filledBoard: (0 | 1)[][]): Board {
   return puzzleBoard;
 }
 
-/**
- * Тип, описывающий очевидный ход (подсказку):
- * - row, col – позиция клетки;
- * - value – единственно возможное значение (0 или 1);
- * - hints – список строк с описанием применённых правил.
- */
-type ObviousMove = {
-  row: number;
-  col: number;
+export type Cell = [row: number, col: number];
+
+export const hasCell = (cells: Cell[], row: number, col: number) =>
+  cells.some(([r, c]) => r === row && c === col);
+
+export const flipValue = (value: 0 | 1): 0 | 1 => (value === 0 ? 1 : 0);
+
+// Правило, по которому значение пустой клетки выводится однозначно
+export type HintRule = "pair" | "sandwich" | "half";
+
+type Deduction = {
+  rule: HintRule;
+  line: "row" | "col";
   value: 0 | 1;
-  hints: string[];
+  // Клетки, на которые опирается вывод
+  clues: Cell[];
 };
 
+export type HintTarget = { cell: Cell; value: 0 | 1 };
+
+export type Hint =
+  | ({ targets: HintTarget[] } & Deduction)
+  | { rule: "mistake"; targets: HintTarget[]; clues: Cell[] };
+
+// Все клетки строки или столбца, проходящих через клетку (row, col)
+const lineCells = (
+  size: number,
+  line: "row" | "col",
+  row: number,
+  col: number,
+): Cell[] =>
+  Array.from({ length: size }, (_, i): Cell =>
+    line === "row" ? [row, i] : [i, col],
+  );
+
 /**
- * Функция findObviousMove ищет среди пустых клеток доски ту,
- * для которой по базовым правилам (подсчёт значений в строке/столбце,
- * правило трёх подряд) можно однозначно вывести значение.
- * Если обнаруживается такая клетка, возвращается объект с позицией, значением и подсказками.
- *
- * @param board - доска Takuzo (с ячейками 0, 1 или null)
- * @returns ObviousMove или null, если ни для одной клетки явного хода не найдено.
+ * Функция findDeductions перечисляет, какие базовые правила (половина линии заполнена
+ * одним значением, запрет трёх подряд) диктуют значение пустой клетки и на какие клетки они опираются.
+ * На доске без ошибок все выводы для клетки дают одно и то же значение.
  */
-function findObviousMove(board: Board): ObviousMove | null {
-  for (let r = 0; r < 6; r++) {
-    for (let c = 0; c < 6; c++) {
-      if (board[r][c] !== null) continue;
-      const candidateSet = new Set<0 | 1>();
-      const ruleHints: string[] = [];
+function findDeductions(board: Board, row: number, col: number): Deduction[] {
+  const deductions: Deduction[] = [];
+  const valueAt = ([r, c]: Cell) => board[r][c];
+  const half = board.length / 2;
 
-      // Правило: если в строке уже 3 нуля/единицы, то оставшиеся клетки обязаны принять противоположное значение.
-      const rowZeros = board[r].filter((cell) => cell === 0).length;
-      const rowOnes = board[r].filter((cell) => cell === 1).length;
-      if (rowZeros === 3) {
-        candidateSet.add(1);
-        ruleHints.push(`В строке уже 3 нуля, значит эта клетка должна быть 1`);
-      }
-      if (rowOnes === 3) {
-        candidateSet.add(0);
-        ruleHints.push(
-          `В строке уже 3 единицы, значит эта клетка должна быть 0`,
-        );
-      }
+  for (const line of ["row", "col"] as const) {
+    const cells = lineCells(board.length, line, row, col);
+    const index = line === "row" ? col : row;
 
-      // Правило: аналогично для столбца.
-      let colZeros = 0,
-        colOnes = 0;
-      for (let i = 0; i < 6; i++) {
-        if (board[i][c] === 0) colZeros++;
-        if (board[i][c] === 1) colOnes++;
+    // Два одинаковых значения подряд с одной из сторон: третье такое же поставить нельзя
+    const pairs = [
+      [cells[index - 2], cells[index - 1]],
+      [cells[index + 1], cells[index + 2]],
+    ];
+    for (const pair of pairs) {
+      if (!pair[0] || !pair[1]) continue;
+      const value = valueAt(pair[0]);
+      if (value !== null && value === valueAt(pair[1])) {
+        deductions.push({
+          rule: "pair",
+          line,
+          value: flipValue(value),
+          clues: pair,
+        });
       }
-      if (colZeros === 3) {
-        candidateSet.add(1);
-        ruleHints.push(`В столбце уже 3 нуля, значит эта клетка должна быть 1`);
-      }
-      if (colOnes === 3) {
-        candidateSet.add(0);
-        ruleHints.push(
-          `В столбце уже 3 единицы, значит эта клетка должна быть 0`,
-        );
-      }
+    }
 
-      // Правила для трёх подряд (горизонтально)
-      // Если слева два одинаковых числа, то текущая клетка должна быть противоположной.
-      if (
-        c >= 2 &&
-        board[r][c - 1] !== null &&
-        board[r][c - 2] === board[r][c - 1]
-      ) {
-        const forced = board[r][c - 1] === 0 ? 1 : 0;
-        candidateSet.add(forced);
-        ruleHints.push(
-          `Два одинаковых числа слева, значит эта клетка должна быть ${forced}`,
-        );
+    // Клетка зажата между двумя одинаковыми значениями
+    const before = cells[index - 1];
+    const after = cells[index + 1];
+    if (before && after) {
+      const value = valueAt(before);
+      if (value !== null && value === valueAt(after)) {
+        deductions.push({
+          rule: "sandwich",
+          line,
+          value: flipValue(value),
+          clues: [before, after],
+        });
       }
-      // Если справа два одинаковых числа.
-      if (
-        c <= 3 &&
-        board[r][c + 1] !== null &&
-        board[r][c + 2] === board[r][c + 1]
-      ) {
-        const forced = board[r][c + 1] === 0 ? 1 : 0;
-        candidateSet.add(forced);
-        ruleHints.push(
-          `Два одинаковых числа справа, значит эта клетка должна быть ${forced}`,
-        );
-      }
-      // Если по бокам одинаковые числа (сэндвич).
-      if (
-        c >= 1 &&
-        c <= 4 &&
-        board[r][c - 1] !== null &&
-        board[r][c + 1] !== null &&
-        board[r][c - 1] === board[r][c + 1]
-      ) {
-        const forced = board[r][c - 1] === 0 ? 1 : 0;
-        candidateSet.add(forced);
-        ruleHints.push(
-          `Два одинаковых числа по бокам, значит эта клетка должна быть ${forced}`,
-        );
-      }
+    }
 
-      // Правила для трёх подряд (вертикально)
-      if (
-        r >= 2 &&
-        board[r - 1][c] !== null &&
-        board[r - 2][c] === board[r - 1][c]
-      ) {
-        const forced = board[r - 1][c] === 0 ? 1 : 0;
-        candidateSet.add(forced);
-        ruleHints.push(
-          `Два одинаковых числа сверху, значит эта клетка должна быть ${forced}`,
-        );
-      }
-      if (
-        r <= 3 &&
-        board[r + 1][c] !== null &&
-        board[r + 2][c] === board[r + 1][c]
-      ) {
-        const forced = board[r + 1][c] === 0 ? 1 : 0;
-        candidateSet.add(forced);
-        ruleHints.push(
-          `Два одинаковых числа снизу, значит эта клетка должна быть ${forced}`,
-        );
-      }
-      if (
-        r >= 1 &&
-        r <= 4 &&
-        board[r - 1][c] !== null &&
-        board[r + 1][c] !== null &&
-        board[r - 1][c] === board[r + 1][c]
-      ) {
-        const forced = board[r - 1][c] === 0 ? 1 : 0;
-        candidateSet.add(forced);
-        ruleHints.push(
-          `Два одинаковых числа сверху и снизу, значит эта клетка должна быть ${forced}`,
-        );
-      }
-
-      // Если по явным правилам кандидат не найден, попробуем методом исключения
-      if (candidateSet.size === 0) {
-        const validCandidates: (0 | 1)[] = [];
-        for (const candidate of [0, 1] as (0 | 1)[]) {
-          board[r][c] = candidate;
-          if (isValid(board, r, c)) {
-            validCandidates.push(candidate);
-          }
-        }
-        board[r][c] = null; // восстановление
-        if (validCandidates.length === 1) {
-          candidateSet.add(validCandidates[0]);
-          ruleHints.push(
-            `Единственная возможная цифра по проверке допустимости`,
-          );
-        }
-      }
-
-      if (candidateSet.size === 1) {
-        // Если для клетки найден единственный кандидат, возвращаем её позицию, значение и подсказки.
-        const forcedCandidate = candidateSet.values().next().value as 0 | 1;
-        return { row: r, col: c, value: forcedCandidate, hints: ruleHints };
+    // В линии уже половина одного значения — остальные клетки получают другое
+    const filled = cells.filter((cell) => valueAt(cell) !== null);
+    for (const value of [0, 1] as const) {
+      if (filled.filter((cell) => valueAt(cell) === value).length === half) {
+        deductions.push({
+          rule: "half",
+          line,
+          value: flipValue(value),
+          clues: filled,
+        });
       }
     }
   }
+
+  return deductions;
+}
+
+/**
+ * Функция findObviousMove ищет среди пустых клеток доски ту,
+ * для которой по базовым правилам можно однозначно вывести значение.
+ *
+ * @param board - доска Takuzo (с ячейками 0, 1 или null)
+ * @returns позиция и значение клетки или null, если явного хода нет.
+ */
+function findObviousMove(
+  board: Board,
+): { row: number; col: number; value: 0 | 1 } | null {
+  for (let r = 0; r < board.length; r++) {
+    for (let c = 0; c < board.length; c++) {
+      if (board[r][c] !== null) continue;
+      const values = new Set(findDeductions(board, r, c).map((d) => d.value));
+      if (values.size === 1) {
+        return { row: r, col: c, value: values.values().next().value as 0 | 1 };
+      }
+    }
+  }
+  return null;
+}
+
+// Сначала показываем самые наглядные правила
+const HINT_RULE_PRIORITY: HintRule[] = ["pair", "sandwich", "half"];
+
+/**
+ * Функция findHint подбирает подсказку для текущей доски:
+ * если игрок ошибся, указывает на неверные клетки, иначе — на клетку,
+ * значение которой следует из базовых правил, вместе с клетками-причинами.
+ *
+ * @param board - текущая доска игрока
+ * @param solution - решение головоломки
+ * @returns подсказка или null, если подсказать нечего.
+ */
+export function findHint(board: Board, solution: (0 | 1)[][]): Hint | null {
+  const mistakes: HintTarget[] = [];
+  const deductions: { cell: Cell; deduction: Deduction }[] = [];
+
+  board.forEach((line, row) =>
+    line.forEach((value, col) => {
+      if (value === null) {
+        for (const deduction of findDeductions(board, row, col)) {
+          deductions.push({ cell: [row, col], deduction });
+        }
+      } else if (value !== solution[row][col]) {
+        mistakes.push({ cell: [row, col], value: solution[row][col] });
+      }
+    }),
+  );
+
+  // Пока на доске есть ошибки, выводы из правил могут быть ложными
+  if (mistakes.length > 0) {
+    return { rule: "mistake", targets: mistakes, clues: [] };
+  }
+
+  for (const rule of HINT_RULE_PRIORITY) {
+    const found = deductions.find(({ deduction }) => deduction.rule === rule);
+    if (!found) continue;
+    const { cell, deduction } = found;
+    // Половина линии набрана — все её пустые клетки заполняются одним значением
+    const targetCells =
+      rule === "half"
+        ? lineCells(board.length, deduction.line, ...cell).filter(
+            ([r, c]) => board[r][c] === null,
+          )
+        : [cell];
+    return {
+      ...deduction,
+      targets: targetCells.map((target) => ({
+        cell: target,
+        value: deduction.value,
+      })),
+    };
+  }
+
   return null;
 }
 

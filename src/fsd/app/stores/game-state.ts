@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import {
   Board,
+  findHint,
   generateBoard,
   getNextValue,
   isValidSolution,
@@ -146,6 +147,15 @@ export const isGameFinished = (state: GameState) => {
     ? currentBoard.flat().every((cell) => cell !== null) &&
         isValidSolution(currentBoard)
     : false;
+};
+
+// Подсказка для текущей доски; решение ищем только по запросу — это перебор
+export const getHint = (state: GameState) => {
+  const currentBoard = getCurrentBoard(state);
+  const initialBoard = state.boardHistory.entities[1];
+  if (!currentBoard || !initialBoard) return null;
+  const [solution] = solve(initialBoard);
+  return solution ? findHint(currentBoard, solution) : null;
 };
 
 export const canUndo = (state: GameState) => {

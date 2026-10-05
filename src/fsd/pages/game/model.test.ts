@@ -6,6 +6,7 @@ import {
   isValidSolution,
   generateBoard,
   solve,
+  findHint,
 } from "./model";
 import type { Board } from "./model";
 import { splitStringEvery } from "~/fsd/shared/lib/utils";
@@ -98,5 +99,68 @@ describe("solve on known solution", () => {
     );
     const solutions = solve(solution as Board);
     expect(solutions).toEqual([solution]);
+  });
+});
+
+describe("findHint", () => {
+  it("leads every step to the solution until the board is full", () => {
+    for (const puzzleNumber of [1, 2, 3]) {
+      const board = generateBoard(puzzleNumber);
+      const [solution] = solve(board);
+      let hint = findHint(board, solution);
+      while (hint) {
+        expect(hint.rule).not.toBe("mistake");
+        expect(hint.targets.length).toBeGreaterThan(0);
+        for (const { cell: [row, col], value } of hint.targets) {
+          expect(board[row][col]).toBe(null);
+          expect(value).toBe(solution[row][col]);
+          board[row][col] = value;
+        }
+        hint = findHint(board, solution);
+      }
+      expect(board).toEqual(solution);
+    }
+  });
+
+  it("explains a pair with the two cells next to the target", () => {
+    const solution = solve(generateBoard(1))[0];
+    // Оставляем на пустой доске только первую пару одинаковых соседей в строке
+    const row = solution.findIndex((line) =>
+      line.some((value, col) => value === line[col + 1]),
+    );
+    const col = solution[row].findIndex(
+      (value, c) => value === solution[row][c + 1],
+    );
+    const board: Board = solution.map((line) => line.map(() => null));
+    board[row][col] = solution[row][col];
+    board[row][col + 1] = solution[row][col + 1];
+
+    const hint = findHint(board, solution);
+    const value = solution[row][col] === 0 ? 1 : 0;
+    const targetCol = col > 0 ? col - 1 : col + 2;
+    expect(hint).toEqual({
+      rule: "pair",
+      line: "row",
+      value,
+      targets: [{ cell: [row, targetCol], value }],
+      clues: [
+        [row, col],
+        [row, col + 1],
+      ],
+    });
+  });
+
+  it("points at wrong cells before anything else", () => {
+    const board = generateBoard(1);
+    const [solution] = solve(board);
+    const [row, col] = [0, 1, 2, 3, 4, 5]
+      .flatMap((r) => [0, 1, 2, 3, 4, 5].map((c) => [r, c]))
+      .find(([r, c]) => board[r][c] === null)!;
+    board[row][col] = solution[row][col] === 0 ? 1 : 0;
+    expect(findHint(board, solution)).toEqual({
+      rule: "mistake",
+      targets: [{ cell: [row, col], value: solution[row][col] }],
+      clues: [],
+    });
   });
 });

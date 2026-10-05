@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useIsClient } from "~/fsd/shared/hooks/use-is-client";
 import { cn, pickRandom } from "~/fsd/shared/lib/utils";
 import {
@@ -12,8 +12,10 @@ import {
   WandSparkles,
 } from "lucide-react";
 import {
+  getHint,
   restartGame,
   useCanUndo,
+  useCurrentBoard,
   useGameFinishedAt,
   useGameFinishSubscription,
   useGameMetaStore,
@@ -25,10 +27,12 @@ import {
   useShouldDisplayTimer,
 } from "~/fsd/app/stores";
 import { Button } from "~/fsd/shared/ui/button";
+import { type Hint } from "./model";
 import { Board } from "./ui/board";
 import { congratulations } from "./ui/congratulations";
 import { GameInstructions } from "./ui/game-instructions";
 import { Header } from "./ui/header";
+import { HintPanel } from "./ui/hint-panel";
 import { SettingsMenu } from "./ui/settings-menu";
 import { Timer } from "./ui/timer";
 import { Tutorial } from "./ui/tutorial";
@@ -62,6 +66,27 @@ export const GamePage = () => {
 
   const { cellRestored, boardCleared, boardSolved } = useGameStateStore();
 
+  const [hint, setHint] = useState<Hint | null>(null);
+  const currentBoard = useCurrentBoard();
+  const isHintDone = hint?.targets.every(
+    ({ cell: [row, col], value }) => currentBoard?.[row][col] === value,
+  );
+
+  // Выполненную подсказку даём рассмотреть и убираем
+  useEffect(() => {
+    if (!isHintDone) return;
+    const timeout = setTimeout(() => setHint(null), 900);
+    return () => clearTimeout(timeout);
+  }, [isHintDone]);
+
+  const handleHintClick = () => {
+    setHint(getHint(useGameStateStore.getState()));
+  };
+
+  const handleHintClose = () => {
+    setHint(null);
+  };
+
   const handleClearClick = () => {
     boardCleared();
   };
@@ -71,6 +96,7 @@ export const GamePage = () => {
   };
 
   const handleRestartClick = () => {
+    setHint(null);
     restartGame();
   };
 
@@ -79,6 +105,7 @@ export const GamePage = () => {
   };
 
   const handleTutorialFinish = () => {
+    setHint(null);
     useSettingsStore.getState().finishTutorial();
     // Новичок ещё не ходил — начинаем партию заново, чтобы обучение не попало в таймер.
     // Если обучение открыли посреди партии, её не трогаем
@@ -133,6 +160,7 @@ export const GamePage = () => {
           "landscape-short:col-start-1 landscape-short:row-span-full",
           showTutorial && "hidden",
         )}
+        hint={hint}
       />
 
       {showTutorial && (
@@ -143,13 +171,22 @@ export const GamePage = () => {
         />
       )}
 
-      {!showTutorial && gameStatus === "playing" && (
+      {!showTutorial && gameStatus === "playing" && hint && (
+        <HintPanel
+          key={hint.targets.map(({ cell }) => cell.join()).join()}
+          hint={hint}
+          className="landscape-short:col-start-2 landscape-short:row-start-4"
+          onClose={handleHintClose}
+        />
+      )}
+
+      {!showTutorial && gameStatus === "playing" && !hint && (
         <div className="grid grid-cols-4 gap-2.5 landscape-short:col-start-2 landscape-short:row-start-4">
           <Button onClick={handleUndoClick} disabled={!canUndo}>
             <Undo2 />
             Undo
           </Button>
-          <Button variant="accent">
+          <Button variant="accent" onClick={handleHintClick}>
             <Lightbulb />
             Hint
           </Button>
