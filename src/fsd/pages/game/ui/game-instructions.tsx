@@ -1,12 +1,8 @@
-import { CircleQuestionMark, X } from "lucide-react";
+import { CircleQuestionMark, Pointer, X } from "lucide-react";
 import { useRef } from "react";
-import { FaEquals, FaXmark } from "react-icons/fa6";
+import { useSettingsStore } from "~/fsd/app/stores";
 import { Button } from "~/fsd/shared/ui/button";
-import { MoonGlyph, SunGlyph } from "./glyphs";
-
-const glyphClassName = "inline size-[1.25em] align-[-0.3em]";
-const Sun = () => <SunGlyph className={glyphClassName} />;
-const Moon = () => <MoonGlyph className={glyphClassName} />;
+import { InlineMoon as Moon, InlineSun as Sun } from "./glyphs";
 
 // Правила в модалке на нативном <dialog>: фокус, Esc и затемнение фона даёт браузер
 export const GameInstructions = () => {
@@ -14,6 +10,11 @@ export const GameInstructions = () => {
 
   const open = () => dialogRef.current?.showModal();
   const close = () => dialogRef.current?.close();
+
+  const handleTutorialClick = () => {
+    close();
+    useSettingsStore.getState().startTutorial();
+  };
 
   return (
     <>
@@ -68,18 +69,18 @@ export const GameInstructions = () => {
             </li>
             <li>Each row (and column) must be unique.</li>
             <li>
-              Cells separated by an <FaEquals className="inline text-sky" />{" "}
-              sign must be of the same type.
-            </li>
-            <li>
-              Cells separated by an <FaXmark className="inline text-sky" /> sign
-              must be of the opposite type.
-            </li>
-            <li>
               Each puzzle has one right answer and can be solved via deduction
               (you should never have to make a guess).
             </li>
           </ul>
+          <Button
+            size="pill"
+            className="self-center"
+            onClick={handleTutorialClick}
+          >
+            <Pointer />
+            Show tutorial
+          </Button>
         </div>
       </dialog>
     </>

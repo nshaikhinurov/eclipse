@@ -37,3 +37,8 @@ export const MoonGlyph = ({ className }: GlyphProps) => (
     />
   </svg>
 );
+
+// Символы в строке текста: чуть крупнее буквы и выровнены по её середине
+const inlineGlyphClassName = "inline size-[1.25em] align-[-0.3em]";
+export const InlineSun = () => <SunGlyph className={inlineGlyphClassName} />;
+export const InlineMoon = () => <MoonGlyph className={inlineGlyphClassName} />;

@@ -1,0 +1,387 @@
+import cn from "clsx";
+import { AnimatePresence, motion } from "motion/react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { FaHandPointer } from "react-icons/fa6";
+import { Button } from "~/fsd/shared/ui/button";
+import {
+  type Board,
+  type CellValue,
+  getLineBalance,
+  getNextValue,
+} from "../model";
+import { CellGlyph } from "./cell-component";
+import { InlineMoon as Moon, InlineSun as Sun } from "./glyphs";
+import { LinePips } from "./line-pips";
+
+type Cell = [row: number, col: number];
+
+type TutorialStep = {
+  title: string;
+  text: ReactNode;
+  // Клетки, которые игрок заполняет на этом шаге
+  targets: Cell[];
+  // Клетки, на которые опирается рассуждение; всё остальное приглушаем
+  clues: Cell[];
+};
+
+// Решение обучающей головоломки: 1 — солнце, 0 — луна
+const SOLUTION: (0 | 1)[][] = [
+  [0, 0, 1, 0, 1, 1],
+  [0, 0, 1, 1, 0, 1],
+  [1, 1, 0, 0, 1, 0],
+  [0, 1, 0, 0, 1, 1],
+  [1, 0, 1, 1, 0, 0],
+  [1, 1, 0, 1, 0, 0],
+];
+
+const SIZE = SOLUTION.length;
+
+// Каждый шаг — одно правило на конкретной клетке; к последнему доска решена целиком
+const STEPS: TutorialStep[] = [
+  {
+    title: "No three in a row",
+    text: (
+      <>
+        No more than 2 <Sun /> or <Moon /> may sit next to each other. Two{" "}
+        <Sun /> are side by side here, so the next cell is a <Moon />. Tap it
+        once.
+      </>
+    ),
+    targets: [[2, 2]],
+    clues: [
+      [2, 0],
+      [2, 1],
+    ],
+  },
+  {
+    title: "Up and down too",
+    text: (
+      <>
+        The rule works vertically as well. A <Moon /> here would make three in a
+        column, so it must be a <Sun />. Tap twice.
+      </>
+    ),
+    targets: [[3, 5]],
+    clues: [
+      [2, 5],
+      [4, 5],
+    ],
+  },
+  {
+    title: "Half and half",
+    text: (
+      <>
+        Each row and column holds three <Sun /> and three <Moon />, the dots
+        keep count. This row has all its <Sun />, so the rest are <Moon />.
+      </>
+    ),
+    targets: [
+      [5, 4],
+      [5, 5],
+    ],
+    clues: [
+      [5, 0],
+      [5, 1],
+      [5, 2],
+      [5, 3],
+    ],
+  },
+  {
+    title: "No twins",
+    text: (
+      <>
+        No two rows (or columns) may be the same. <Moon />
+        <Sun /> here would copy the top row, so it is <Sun />
+        <Moon />.
+      </>
+    ),
+    targets: [
+      [1, 3],
+      [1, 4],
+    ],
+    clues: [
+      ...SOLUTION[0].map((_, col): Cell => [0, col]),
+      [1, 0],
+      [1, 1],
+      [1, 2],
+      [1, 5],
+    ],
+  },
+  {
+    title: "You're ready",
+    text: (
+      <>
+        A tap cycles a cell through <Moon />, <Sun /> and empty. Every puzzle
+        has one answer and is solved by logic alone, never by guessing.
+      </>
+    ),
+    targets: [],
+    clues: [],
+  },
+];
+
+const hasCell = (cells: Cell[], row: number, col: number) =>
+  cells.some(([r, c]) => r === row && c === col);
+
+const isTutorialCell = (row: number, col: number) =>
+  STEPS.some((step) => hasCell(step.targets, row, col));
+
+const createInitialBoard = (): Board =>
+  SOLUTION.map((line, row) =>
+    line.map((value, col) => (isTutorialCell(row, col) ? null : value)),
+  );
+
+// Сколько тапов отделяет текущее значение клетки от нужного
+const countTaps = (from: CellValue, to: CellValue) => {
+  let taps = 0;
+  for (let value = from; value !== to; value = getNextValue(value)) taps++;
+  return taps;
+};
+
+type Frame = {
+  at: number;
+  opacity: number;
+  x: number;
+  y: number;
+  scale: number;
+};
+
+// Раскадровка пальца: подлетает снизу справа, жмёт нужное число раз, уходит
+const buildHandFrames = (taps: number) => {
+  const frames: Frame[] = [{ at: 0, opacity: 0, x: 14, y: 20, scale: 1 }];
+  const pressedAt: number[] = [];
+  let at = 0.45;
+  frames.push({ at, opacity: 1, x: 0, y: 0, scale: 1 });
+  for (let i = 0; i < taps; i++) {
+    at += 0.15;
+    frames.push({ at, opacity: 1, x: 0, y: 0, scale: 0.8 });
+    pressedAt.push(at);
+    at += 0.15;
+    frames.push({ at, opacity: 1, x: 0, y: 0, scale: 1 });
+  }
+  at += 0.5;
+  frames.push({ at, opacity: 1, x: 0, y: 0, scale: 1 });
+  at += 0.3;
+  frames.push({ at, opacity: 0, x: 8, y: 12, scale: 1 });
+  return { frames, pressedAt, duration: at };
+};
+
+const HAND_REPEAT_DELAY = 0.6;
+
+const TapHand = ({ taps }: { taps: number }) => {
+  const { frames, pressedAt, duration } = buildHandFrames(taps);
+  const transition = {
+    duration,
+    times: frames.map((frame) => frame.at / duration),
+    repeat: Infinity,
+    repeatDelay: HAND_REPEAT_DELAY,
+    ease: "easeInOut" as const,
+  };
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-10">
+      {/* Круги от касаний, по одному на каждый тап */}
+      {pressedAt.map((at) => (
+        <motion.span
+          key={at}
+          className="absolute inset-0 rounded-full border-2 border-white/70"
+          initial={{ opacity: 0, scale: 0.4 }}
+          animate={{ opacity: [0, 0, 0.9, 0], scale: [0.4, 0.4, 0.55, 1.25] }}
+          transition={{
+            duration,
+            times: [
+              0,
+              at / duration,
+              (at + 0.02) / duration,
+              (at + 0.4) / duration,
+            ],
+            repeat: Infinity,
+            repeatDelay: HAND_REPEAT_DELAY,
+          }}
+        />
+      ))}
+      {/* Кончик указательного пальца иконки — на 37.5% ширины от левого края */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-[37.5%]">
+        <motion.div
+          className="origin-top"
+          initial={{ opacity: 0 }}
+          animate={{
+            opacity: frames.map((frame) => frame.opacity),
+            x: frames.map((frame) => frame.x),
+            y: frames.map((frame) => frame.y),
+            scale: frames.map((frame) => frame.scale),
+          }}
+          transition={transition}
+        >
+          <FaHandPointer className="h-8 w-7 text-white drop-shadow-[0_0.25rem_0.5rem_rgb(0_0_0/0.5)]" />
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
+type TutorialProps = {
+  boardClassName?: string;
+  panelClassName?: string;
+  onFinish: () => void;
+};
+
+// Обучение на фиксированной головоломке: по шагу на правило, палец показывает, куда тапнуть
+export const Tutorial = ({
+  boardClassName,
+  panelClassName,
+  onFinish,
+}: TutorialProps) => {
+  const [stepIndex, setStepIndex] = useState(0);
+  const [board, setBoard] = useState(createInitialBoard);
+
+  const step = STEPS[stepIndex];
+  const isLastStep = stepIndex === STEPS.length - 1;
+  const isSolved = (row: number, col: number) =>
+    board[row][col] === SOLUTION[row][col];
+  const isStepSolved = step.targets.every(([row, col]) => isSolved(row, col));
+  const handTarget = step.targets.find(([row, col]) => !isSolved(row, col));
+
+  const { rows, cols } = useMemo(() => getLineBalance(board), [board]);
+
+  // Решённый шаг даём рассмотреть и переходим к следующему
+  useEffect(() => {
+    if (!isStepSolved || isLastStep) return;
+    const timeout = setTimeout(() => setStepIndex((index) => index + 1), 900);
+    return () => clearTimeout(timeout);
+  }, [isStepSolved, isLastStep]);
+
+  const handleCellClick = (row: number, col: number) => {
+    setBoard((current) =>
+      current.map((line, r) =>
+        r === row
+          ? line.map((value, c) => (c === col ? getNextValue(value) : value))
+          : line,
+      ),
+    );
+  };
+
+  return (
+    <>
+      <div
+        className={cn(
+          "grid grid-cols-[1fr_1.125rem] grid-rows-[auto_1.125rem] gap-2 rounded-[1.625rem] border border-lilac/14 bg-white/[0.035] p-3.5",
+          boardClassName,
+        )}
+      >
+        <div className="grid aspect-square grid-cols-6 grid-rows-6 gap-2.25">
+          {board.flatMap((line, row) =>
+            line.map((value, col) => {
+              const isTarget = hasCell(step.targets, row, col);
+              const isActive = isTarget && !isSolved(row, col);
+              const isDimmed =
+                step.targets.length > 0 &&
+                !isTarget &&
+                !hasCell(step.clues, row, col);
+              const isHandHere =
+                handTarget?.[0] === row && handTarget?.[1] === col;
+
+              return (
+                // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+                <div
+                  key={`${row}-${col}`}
+                  className={cn(
+                    "relative flex aspect-square items-center justify-center rounded-full transition-opacity duration-300",
+                    isTutorialCell(row, col)
+                      ? "bg-white/4 inset-ring inset-ring-lilac/18"
+                      : "bg-lilac/12",
+                    isActive &&
+                      "cursor-pointer inset-ring-2 inset-ring-peach/70 transition hover:bg-white/9 active:scale-90",
+                    isDimmed && "opacity-30",
+                  )}
+                  onClick={
+                    isActive ? () => handleCellClick(row, col) : undefined
+                  }
+                >
+                  <CellGlyph value={value} />
+                  {isHandHere && (
+                    <TapHand
+                      key={`${row}-${col}-${value}`}
+                      taps={countTaps(value, SOLUTION[row][col])}
+                    />
+                  )}
+                </div>
+              );
+            }),
+          )}
+        </div>
+        <div className="grid grid-rows-6 gap-2.25">
+          {rows.map((balance, index) => (
+            <LinePips
+              key={index}
+              balance={balance}
+              half={SIZE / 2}
+              direction="row"
+              shouldDisplayErrors={false}
+            />
+          ))}
+        </div>
+        <div className="grid grid-cols-6 gap-2.25">
+          {cols.map((balance, index) => (
+            <LinePips
+              key={index}
+              balance={balance}
+              half={SIZE / 2}
+              direction="col"
+              shouldDisplayErrors={false}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className={cn("flex flex-col gap-3", panelClassName)}>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={stepIndex}
+            className="flex flex-col gap-1"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+          >
+            <h2 className="text-lg leading-6 font-extrabold text-white">
+              {step.title}
+            </h2>
+            <p className="text-[0.8125rem] leading-5 text-pretty text-mist">
+              {step.text}
+            </p>
+          </motion.div>
+        </AnimatePresence>
+        <div className="flex items-center justify-between gap-4">
+          <div
+            className="flex gap-1.5"
+            aria-label={`Step ${stepIndex + 1} of ${STEPS.length}`}
+          >
+            {STEPS.map((_, index) => (
+              <span
+                key={index}
+                className={cn(
+                  "h-1.5 rounded-full transition-all duration-300",
+                  index === stepIndex
+                    ? "w-5 bg-peach"
+                    : index < stepIndex
+                      ? "w-1.5 bg-peach/60"
+                      : "w-1.5 bg-white/15",
+                )}
+              />
+            ))}
+          </div>
+          {isLastStep ? (
+            <Button variant="accent" size="pill" onClick={onFinish}>
+              Start playing
+            </Button>
+          ) : (
+            <Button size="pill" onClick={onFinish}>
+              Skip
+            </Button>
+          )}
+        </div>
+      </div>
+    </>
+  );
+};

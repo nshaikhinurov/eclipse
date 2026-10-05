@@ -19,7 +19,9 @@ import {
   useGameMetaStore,
   useGameStartedAt,
   useGameStateStore,
+  useHasSeenTutorial,
   usePuzzleNumber,
+  useSettingsStore,
   useShouldDisplayTimer,
 } from "~/fsd/app/stores";
 import { Button } from "~/fsd/shared/ui/button";
@@ -29,6 +31,7 @@ import { GameInstructions } from "./ui/game-instructions";
 import { Header } from "./ui/header";
 import { SettingsMenu } from "./ui/settings-menu";
 import { Timer } from "./ui/timer";
+import { Tutorial } from "./ui/tutorial";
 
 export const GamePage = () => {
   // Set up game finish detection
@@ -53,6 +56,9 @@ export const GamePage = () => {
   const isHeaderReady = isClient && gameStartedAt > 0;
   const showTimer = isClient ? shouldDisplayTimer : true;
   const canUndo = useCanUndo();
+  // Флаг лежит в localStorage, поэтому решаем только на клиенте — иначе разъедется гидратация
+  const hasSeenTutorial = useHasSeenTutorial();
+  const showTutorial = isClient && !hasSeenTutorial;
 
   const { cellRestored, boardCleared, boardSolved } = useGameStateStore();
 
@@ -72,6 +78,13 @@ export const GamePage = () => {
     boardSolved();
   };
 
+  const handleTutorialFinish = () => {
+    useSettingsStore.getState().finishTutorial();
+    // Новичок ещё не ходил — начинаем партию заново, чтобы обучение не попало в таймер.
+    // Если обучение открыли посреди партии, её не трогаем
+    if (!canUndo) restartGame();
+  };
+
   const randomCongratulation = pickRandom(congratulations);
 
   return (
@@ -80,21 +93,31 @@ export const GamePage = () => {
       {/* Три колонки, чтобы номер с таймером стоял ровно по центру при разном числе кнопок по краям */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center text-[0.8125rem] font-bold tracking-[0.14em] text-haze landscape-short:col-start-2 landscape-short:row-start-1">
         <div className="flex gap-2">
-          <Button size="icon" onClick={handleRestartClick} aria-label="Restart">
-            <RotateCcw />
-          </Button>
-        </div>
-        <div
-          className={cn(
-            "flex items-center gap-2.5 tabular-nums",
-            !isHeaderReady && "invisible",
+          {!showTutorial && (
+            <Button
+              size="icon"
+              onClick={handleRestartClick}
+              aria-label="Restart"
+            >
+              <RotateCcw />
+            </Button>
           )}
-        >
-          <span>
-            #{String(isHeaderReady ? puzzleNumber : 0).padStart(4, "0")}
-          </span>
-          {showTimer && <Timer key={gameStartedAt} />}
         </div>
+        {showTutorial ? (
+          <span className="uppercase">How to play</span>
+        ) : (
+          <div
+            className={cn(
+              "flex items-center gap-2.5 tabular-nums",
+              !isHeaderReady && "invisible",
+            )}
+          >
+            <span>
+              #{String(isHeaderReady ? puzzleNumber : 0).padStart(4, "0")}
+            </span>
+            {showTimer && <Timer key={gameStartedAt} />}
+          </div>
+        )}
         <div className="flex justify-end gap-2">
           <GameInstructions />
           <SettingsMenu />
@@ -103,12 +126,24 @@ export const GamePage = () => {
 
       <Header className="landscape-short:col-start-2 landscape-short:row-start-2" />
 
+      {/* Доску на время обучения прячем, а не размонтируем: иначе ходы игрока станут закреплёнными клетками */}
       <Board
         key={gameStartedAt}
-        className="landscape-short:col-start-1 landscape-short:row-span-full"
+        className={cn(
+          "landscape-short:col-start-1 landscape-short:row-span-full",
+          showTutorial && "hidden",
+        )}
       />
 
-      {gameStatus === "playing" && (
+      {showTutorial && (
+        <Tutorial
+          boardClassName="landscape-short:col-start-1 landscape-short:row-span-full"
+          panelClassName="landscape-short:col-start-2 landscape-short:row-start-4"
+          onFinish={handleTutorialFinish}
+        />
+      )}
+
+      {!showTutorial && gameStatus === "playing" && (
         <div className="grid grid-cols-4 gap-2.5 landscape-short:col-start-2 landscape-short:row-start-4">
           <Button onClick={handleUndoClick} disabled={!canUndo}>
             <Undo2 />
@@ -129,7 +164,7 @@ export const GamePage = () => {
         </div>
       )}
 
-      {gameStatus === "finished" && (
+      {!showTutorial && gameStatus === "finished" && (
         // Поздравление занимает ту же сетку, что и кнопки, — высота экрана не меняется
         <div className="grid grid-cols-[1fr_auto] gap-2.5 landscape-short:col-start-2 landscape-short:row-start-4">
           <div className="flex flex-col justify-start gap-0.5">

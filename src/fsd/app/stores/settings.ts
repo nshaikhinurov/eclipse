@@ -5,9 +5,13 @@ import { immer } from "zustand/middleware/immer";
 type SettingsState = {
   shouldDisplayTimer: boolean;
   shouldDisplayErrors: boolean;
+  // Новичку при первом заходе показываем обучение
+  hasSeenTutorial: boolean;
   // Actions
   toggleTimerDisplay: () => void;
   toggleErrorDisplay: () => void;
+  startTutorial: () => void;
+  finishTutorial: () => void;
   updateSettings: (
     settings: Partial<{
       shouldDisplayTimer: boolean;
@@ -22,6 +26,7 @@ export const useSettingsStore = create<SettingsState>()(
     immer((set) => ({
       shouldDisplayTimer: true,
       shouldDisplayErrors: true,
+      hasSeenTutorial: false,
 
       toggleTimerDisplay: () =>
         set((state) => {
@@ -31,6 +36,16 @@ export const useSettingsStore = create<SettingsState>()(
       toggleErrorDisplay: () =>
         set((state) => {
           state.shouldDisplayErrors = !state.shouldDisplayErrors;
+        }),
+
+      startTutorial: () =>
+        set((state) => {
+          state.hasSeenTutorial = false;
+        }),
+
+      finishTutorial: () =>
+        set((state) => {
+          state.hasSeenTutorial = true;
         }),
 
       updateSettings: (settings) =>
@@ -55,3 +70,6 @@ export const useShouldDisplayTimer = () =>
 
 export const useShouldDisplayErrors = () =>
   useSettingsStore((state) => state.shouldDisplayErrors);
+
+export const useHasSeenTutorial = () =>
+  useSettingsStore((state) => state.hasSeenTutorial);
