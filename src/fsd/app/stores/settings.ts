@@ -4,18 +4,15 @@ import { immer } from "zustand/middleware/immer";
 
 type SettingsState = {
   shouldDisplayTimer: boolean;
-  shouldDisplayErrors: boolean;
   // Новичку при первом заходе показываем обучение
   hasSeenTutorial: boolean;
   // Actions
   toggleTimerDisplay: () => void;
-  toggleErrorDisplay: () => void;
   startTutorial: () => void;
   finishTutorial: () => void;
   updateSettings: (
     settings: Partial<{
       shouldDisplayTimer: boolean;
-      shouldDisplayErrors: boolean;
     }>,
   ) => void;
 };
@@ -25,17 +22,11 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     immer((set) => ({
       shouldDisplayTimer: true,
-      shouldDisplayErrors: true,
       hasSeenTutorial: false,
 
       toggleTimerDisplay: () =>
         set((state) => {
           state.shouldDisplayTimer = !state.shouldDisplayTimer;
-        }),
-
-      toggleErrorDisplay: () =>
-        set((state) => {
-          state.shouldDisplayErrors = !state.shouldDisplayErrors;
         }),
 
       startTutorial: () =>
@@ -53,9 +44,6 @@ export const useSettingsStore = create<SettingsState>()(
           if (settings.shouldDisplayTimer !== undefined) {
             state.shouldDisplayTimer = settings.shouldDisplayTimer;
           }
-          if (settings.shouldDisplayErrors !== undefined) {
-            state.shouldDisplayErrors = settings.shouldDisplayErrors;
-          }
         }),
     })),
     {
@@ -67,9 +55,6 @@ export const useSettingsStore = create<SettingsState>()(
 // Hook selectors
 export const useShouldDisplayTimer = () =>
   useSettingsStore((state) => state.shouldDisplayTimer);
-
-export const useShouldDisplayErrors = () =>
-  useSettingsStore((state) => state.shouldDisplayErrors);
 
 export const useHasSeenTutorial = () =>
   useSettingsStore((state) => state.hasSeenTutorial);

@@ -1,9 +1,5 @@
-import { Clock, ListChecks, Settings2, type LucideIcon } from "lucide-react";
-import {
-  useSettingsStore,
-  useShouldDisplayErrors,
-  useShouldDisplayTimer,
-} from "~/fsd/app/stores";
+import { Clock, Settings2, type LucideIcon } from "lucide-react";
+import { useSettingsStore, useShouldDisplayTimer } from "~/fsd/app/stores";
 import { buttonVariants } from "~/fsd/shared/ui/button";
 import {
   DropdownMenu,
@@ -53,8 +49,9 @@ const ToggleItem = ({
 
 export const SettingsMenu = () => {
   const shouldDisplayTimer = useShouldDisplayTimer();
-  const shouldDisplayErrors = useShouldDisplayErrors();
-  const { toggleTimerDisplay, toggleErrorDisplay } = useSettingsStore();
+  const toggleTimerDisplay = useSettingsStore(
+    (state) => state.toggleTimerDisplay,
+  );
 
   return (
     <DropdownMenu>
@@ -71,12 +68,6 @@ export const SettingsMenu = () => {
             label="Show clock"
             checked={shouldDisplayTimer}
             onToggle={toggleTimerDisplay}
-          />
-          <ToggleItem
-            icon={ListChecks}
-            label="Auto-check"
-            checked={shouldDisplayErrors}
-            onToggle={toggleErrorDisplay}
           />
         </DropdownMenuGroup>
       </DropdownMenuContent>

@@ -25,7 +25,6 @@ beforeEach(() => {
   });
   useSettingsStore.setState({
     shouldDisplayTimer: true,
-    shouldDisplayErrors: true,
   });
 });
 
@@ -113,7 +112,6 @@ describe("Settings Store", () => {
   it("should initialize with default settings", () => {
     const settings = useSettingsStore.getState();
     expect(settings.shouldDisplayTimer).toBe(true);
-    expect(settings.shouldDisplayErrors).toBe(true);
   });
 
   it("should toggle timer display setting", () => {
@@ -123,16 +121,6 @@ describe("Settings Store", () => {
     toggleTimerDisplay();
 
     const newValue = useSettingsStore.getState().shouldDisplayTimer;
-    expect(newValue).toBe(!initialValue);
-  });
-
-  it("should toggle error display setting", () => {
-    const { toggleErrorDisplay } = useSettingsStore.getState();
-    const initialValue = useSettingsStore.getState().shouldDisplayErrors;
-
-    toggleErrorDisplay();
-
-    const newValue = useSettingsStore.getState().shouldDisplayErrors;
     expect(newValue).toBe(!initialValue);
   });
 });
