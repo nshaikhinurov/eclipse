@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useIsClient } from "~/fsd/shared/hooks/use-is-client";
-import { cn, pickRandom } from "~/fsd/shared/lib/utils";
+import { cn } from "~/fsd/shared/lib/utils";
 import {
   Eraser,
   Lightbulb,
@@ -14,8 +14,8 @@ import {
 import {
   getHint,
   restartGame,
+  getCurrentBoard,
   useCanUndo,
-  useCurrentBoard,
   useGameFinishedAt,
   useGameFinishSubscription,
   useGameMetaStore,
@@ -64,12 +64,14 @@ export const GamePage = () => {
   const hasSeenTutorial = useHasSeenTutorial();
   const showTutorial = isClient && !hasSeenTutorial;
 
-  const { cellRestored, boardCleared, boardSolved } = useGameStateStore();
-
   const [hint, setHint] = useState<Hint | null>(null);
-  const currentBoard = useCurrentBoard();
-  const isHintDone = hint?.targets.every(
-    ({ cell: [row, col], value }) => currentBoard?.[row][col] === value,
+  // Подписываемся на готовность подсказки, а не на всю доску: иначе страница перерисовывается на каждый ход
+  const isHintDone = useGameStateStore(
+    (state) =>
+      hint?.targets.every(
+        ({ cell: [row, col], value }) =>
+          getCurrentBoard(state)?.[row][col] === value,
+      ) ?? false,
   );
 
   // Выполненную подсказку даём рассмотреть и убираем
@@ -88,11 +90,11 @@ export const GamePage = () => {
   };
 
   const handleClearClick = () => {
-    boardCleared();
+    useGameStateStore.getState().boardCleared();
   };
 
   const handleUndoClick = () => {
-    cellRestored();
+    useGameStateStore.getState().cellRestored();
   };
 
   const handleRestartClick = () => {
@@ -101,7 +103,7 @@ export const GamePage = () => {
   };
 
   const handleSolveClick = () => {
-    boardSolved();
+    useGameStateStore.getState().boardSolved();
   };
 
   const handleTutorialFinish = () => {
@@ -112,7 +114,9 @@ export const GamePage = () => {
     if (!canUndo) restartGame();
   };
 
-  const randomCongratulation = pickRandom(congratulations);
+  // Выбор зависит от момента победы, а не от Math.random при рендере: иначе текст меняется при каждой перерисовке
+  const randomCongratulation =
+    congratulations[gameFinishedAt % congratulations.length];
 
   return (
     // В альбомной ориентации телефона: доска слева на всю высоту, остальное колонкой справа

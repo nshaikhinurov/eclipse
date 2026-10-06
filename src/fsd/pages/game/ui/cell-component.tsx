@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { useCell, useGameStateStore } from "~/fsd/app/stores";
 import { useIsClient } from "~/fsd/shared/hooks/use-is-client";
 import { cn } from "~/fsd/shared/lib/utils";
@@ -10,7 +10,8 @@ import { TapHand } from "./tap-hand";
 // Роль клетки в показанной подсказке: куда ходить, на что опираться, что приглушить
 export type CellHintRole = "target" | "clue" | "dimmed";
 
-export const CellComponent = ({
+// memo: при ходе доска перерисовывается целиком, а клетке нужно обновиться, только если изменились её пропсы
+export const CellComponent = memo(function CellComponent({
   id,
   initialValue,
   hintRole,
@@ -21,10 +22,10 @@ export const CellComponent = ({
   hintRole?: CellHintRole;
   // Сколько раз палец подсказки тапает по клетке; без значения палец не показываем
   handTaps?: number;
-}) => {
+}) {
   const [isLocked] = useState(initialValue !== null);
   const isClient = useIsClient();
-  const { cellClicked } = useGameStateStore();
+  const cellClicked = useGameStateStore((state) => state.cellClicked);
   const cellValue = useCell(id);
   // Пока открыта подсказка, нажимать можно только на её клетки
   const isClickable =
@@ -40,8 +41,7 @@ export const CellComponent = ({
         "relative flex aspect-square items-center justify-center rounded-full",
         {
           "bg-lilac/12": isClient && isLocked,
-          "bg-white/4 inset-ring inset-ring-lilac/18":
-            !isClient || !isLocked,
+          "bg-white/4 inset-ring inset-ring-lilac/18": !isClient || !isLocked,
           "cursor-pointer transition hover:bg-white/9 hover:inset-ring-lilac/40 active:scale-90":
             isClickable,
           "inset-ring-2 inset-ring-peach/70 hover:inset-ring-peach/70":
@@ -60,7 +60,7 @@ export const CellComponent = ({
       )}
     </motion.div>
   );
-};
+});
 
 // Солнце или луна в клетке с анимацией появления и смены
 export const CellGlyph = ({ value }: { value: CellValue }) => (

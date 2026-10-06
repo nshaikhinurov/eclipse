@@ -8,7 +8,8 @@ export const Timer = () => {
   const gameStartedAt = useGameStartedAt();
   const gameFinishedAt = useGameFinishedAt();
   const isClient = useIsClient();
-  const [now, setNow] = useState(0);
+  // Целые секунды с начала партии: пока цифра та же, React пропускает перерисовку
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const isRunning = isClient && gameStartedAt > 0 && gameFinishedAt === 0;
 
@@ -16,10 +17,16 @@ export const Timer = () => {
   useEffect(() => {
     if (!isRunning) return;
 
-    const interval = setInterval(() => setNow(Date.now()), 250);
+    const interval = setInterval(
+      () =>
+        setElapsedSeconds(
+          Math.max(0, Math.floor((Date.now() - gameStartedAt) / 1000)),
+        ),
+      250,
+    );
 
     return () => clearInterval(interval);
-  }, [isRunning]);
+  }, [isRunning, gameStartedAt]);
 
   // На сервере и до старта игры показываем нулевое время,
   // после завершения — финальное
@@ -28,7 +35,7 @@ export const Timer = () => {
     elapsedTime =
       gameFinishedAt > 0
         ? gameFinishedAt - gameStartedAt
-        : Math.max(0, now - gameStartedAt);
+        : elapsedSeconds * 1000;
   }
   const timerString = formatElapsedTime(elapsedTime);
 

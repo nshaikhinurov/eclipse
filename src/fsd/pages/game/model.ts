@@ -528,25 +528,25 @@ function findDeductions(board: Board, row: number, col: number): Deduction[] {
 }
 
 /**
- * Функция findObviousMove ищет среди пустых клеток доски ту,
- * для которой по базовым правилам можно однозначно вывести значение.
+ * Функция fillObviousMoves за один проход по доске ставит все клетки,
+ * значение которых однозначно выводится по базовым правилам.
  *
- * @param board - доска Takuzo (с ячейками 0, 1 или null)
- * @returns позиция и значение клетки или null, если явного хода нет.
+ * @param board - доска Takuzo (с ячейками 0, 1 или null), изменяется на месте
+ * @returns true, если поставлена хотя бы одна клетка.
  */
-function findObviousMove(
-  board: Board,
-): { row: number; col: number; value: 0 | 1 } | null {
+function fillObviousMoves(board: Board): boolean {
+  let hasMoved = false;
   for (let r = 0; r < board.length; r++) {
     for (let c = 0; c < board.length; c++) {
       if (board[r][c] !== null) continue;
       const values = new Set(findDeductions(board, r, c).map((d) => d.value));
       if (values.size === 1) {
-        return { row: r, col: c, value: values.values().next().value as 0 | 1 };
+        board[r][c] = values.values().next().value as 0 | 1;
+        hasMoved = true;
       }
     }
   }
-  return null;
+  return hasMoved;
 }
 
 // Сначала показываем самые наглядные правила
@@ -607,20 +607,18 @@ export function findHint(board: Board, solution: (0 | 1)[][]): Hint | null {
 
 /**
  * Функция simulateForcedSolving имитирует процесс решения головоломки,
- * последовательно применяя очевидный ход (findObviousMove).
+ * проходами по доске расставляя очевидные ходы (fillObviousMoves), пока они находятся.
  * Если после последовательного заполнения все клетки заполнены, возвращается true,
  * что означает — головоломка решается без догадок.
+ * Порядок ходов на итог не влияет: каждый очевидный ход обязателен для любого решения.
  *
  * @param board - исходная доска Takuzo (с ячейками 0, 1 или null)
  * @returns true, если доска полностью решается последовательными очевидными ходами, иначе false.
  */
 function simulateForcedSolving(board: Board): boolean {
-  const deepCopy = (b: Board): Board => b.map((row) => row.slice());
   const simulated = deepCopy(board);
-  let move = findObviousMove(simulated);
-  while (move) {
-    simulated[move.row][move.col] = move.value;
-    move = findObviousMove(simulated);
+  while (fillObviousMoves(simulated)) {
+    // Новые клетки могли открыть новые выводы — проходим ещё раз
   }
   // Если на доске не осталось пустых клеток — решение найдено.
   for (let r = 0; r < 6; r++) {

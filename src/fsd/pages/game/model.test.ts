@@ -88,6 +88,12 @@ describe("generateBoard", () => {
       });
     });
   });
+
+  it("returns a puzzle with exactly one solution", () => {
+    for (let i = 0; i < 50; i++) {
+      expect(solve(generateBoard())).toHaveLength(1);
+    }
+  });
 });
 
 // Test solving on known solution
@@ -111,7 +117,10 @@ describe("findHint", () => {
       while (hint) {
         expect(hint.rule).not.toBe("mistake");
         expect(hint.targets.length).toBeGreaterThan(0);
-        for (const { cell: [row, col], value } of hint.targets) {
+        for (const {
+          cell: [row, col],
+          value,
+        } of hint.targets) {
           expect(board[row][col]).toBe(null);
           expect(value).toBe(solution[row][col]);
           board[row][col] = value;
