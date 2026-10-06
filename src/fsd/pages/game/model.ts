@@ -21,24 +21,6 @@ export function getNextValue(value: CellValue): CellValue {
   return null;
 }
 
-// Сколько солнц (1) и лун (0) уже стоит в линии
-export type LineBalance = { suns: number; moons: number };
-
-const countLine = (line: CellValue[]): LineBalance => ({
-  suns: line.filter((cell) => cell === 1).length,
-  moons: line.filter((cell) => cell === 0).length,
-});
-
-export function getLineBalance(board: Board): {
-  rows: LineBalance[];
-  cols: LineBalance[];
-} {
-  return {
-    rows: board.map(countLine),
-    cols: board.length ? transposeMatrix(board).map(countLine) : [],
-  };
-}
-
 // Номер головоломки — порядковый номер её решения в validBoardsSerialized (с 1)
 export const pickRandomPuzzleNumber = () =>
   Math.floor(Math.random() * validBoardsSerialized.length) + 1;

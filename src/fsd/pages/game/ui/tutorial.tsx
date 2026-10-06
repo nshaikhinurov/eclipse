@@ -1,17 +1,10 @@
 import cn from "clsx";
 import { AnimatePresence, motion } from "motion/react";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Button } from "~/fsd/shared/ui/button";
-import {
-  type Board,
-  type Cell,
-  getLineBalance,
-  getNextValue,
-  hasCell,
-} from "../model";
+import { type Board, type Cell, getNextValue, hasCell } from "../model";
 import { CellGlyph } from "./cell-component";
 import { InlineMoon as Moon, InlineSun as Sun } from "./glyphs";
-import { LinePips } from "./line-pips";
 import { countTaps, TapHand } from "./tap-hand";
 
 type TutorialStep = {
@@ -32,8 +25,6 @@ const SOLUTION: (0 | 1)[][] = [
   [1, 0, 1, 1, 0, 0],
   [1, 1, 0, 1, 0, 0],
 ];
-
-const SIZE = SOLUTION.length;
 
 // Каждый шаг — одно правило на конкретной клетке; к последнему доска решена целиком
 const STEPS: TutorialStep[] = [
@@ -70,8 +61,8 @@ const STEPS: TutorialStep[] = [
     title: "Half and half",
     text: (
       <>
-        Each row and column holds three <Sun /> and three <Moon />, the dots
-        keep count. This row has all its <Sun />, so the rest are <Moon />.
+        Each row and column holds three <Sun /> and three <Moon />. This row has
+        all its <Sun />, so the rest are <Moon />.
       </>
     ),
     targets: [
@@ -149,8 +140,6 @@ export const Tutorial = ({
   const isStepSolved = step.targets.every(([row, col]) => isSolved(row, col));
   const handTarget = step.targets.find(([row, col]) => !isSolved(row, col));
 
-  const { rows, cols } = useMemo(() => getLineBalance(board), [board]);
-
   // Решённый шаг даём рассмотреть и переходим к следующему
   useEffect(() => {
     if (!isStepSolved || isLastStep) return;
@@ -172,7 +161,7 @@ export const Tutorial = ({
     <>
       <div
         className={cn(
-          "grid grid-cols-[1fr_1.125rem] grid-rows-[auto_1.125rem] gap-2 rounded-[1.625rem] border border-lilac/14 bg-white/[0.035] p-3.5",
+          "rounded-[1.625rem] border border-lilac/14 bg-white/[0.035] p-3.5",
           boardClassName,
         )}
       >
@@ -216,28 +205,6 @@ export const Tutorial = ({
               );
             }),
           )}
-        </div>
-        <div className="grid grid-rows-6 gap-2.25">
-          {rows.map((balance, index) => (
-            <LinePips
-              key={index}
-              balance={balance}
-              half={SIZE / 2}
-              direction="row"
-              shouldDisplayErrors={false}
-            />
-          ))}
-        </div>
-        <div className="grid grid-cols-6 gap-2.25">
-          {cols.map((balance, index) => (
-            <LinePips
-              key={index}
-              balance={balance}
-              half={SIZE / 2}
-              direction="col"
-              shouldDisplayErrors={false}
-            />
-          ))}
         </div>
       </div>
 
