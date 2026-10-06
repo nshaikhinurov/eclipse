@@ -18,11 +18,9 @@ import {
   useCanUndo,
   useGameFinishedAt,
   useGameFinishSubscription,
-  useGameMetaStore,
   useGameStartedAt,
   useGameStateStore,
   useHasSeenTutorial,
-  usePuzzleNumber,
   useSettingsStore,
   useShouldDisplayTimer,
 } from "~/fsd/app/stores";
@@ -41,20 +39,19 @@ export const GamePage = () => {
   // Set up game finish detection
   useGameFinishSubscription();
 
-  // Засекаем время первой партии при открытии страницы
-  useEffect(() => {
-    const { gameStartedAt, startGame } = useGameMetaStore.getState();
-    if (gameStartedAt === 0) startGame();
-  }, []);
-
   const gameStartedAt = useGameStartedAt();
+
+  // Первую партию начинаем при открытии страницы: только здесь известен размер доски из настроек.
+  // Следим за временем старта, а не за монтированием: при горячей перезагрузке сторы создаются заново пустыми
+  useEffect(() => {
+    if (gameStartedAt === 0) restartGame();
+  }, [gameStartedAt]);
   const gameFinishedAt = useGameFinishedAt();
-  const puzzleNumber = usePuzzleNumber();
   const gameStatus = gameFinishedAt > 0 ? "finished" : "playing";
 
   const shouldDisplayTimer = useShouldDisplayTimer();
   const isClient = useIsClient();
-  // Номер выбирается случайно, а настройки лежат в localStorage — сервер не знает ни того, ни другого.
+  // Настройки лежат в localStorage — сервер их не знает.
   // До старта партии на клиенте держим блок невидимым (место занято), а таймер рисуем как на сервере,
   // чтобы гидратация совпала и шапка не прыгала
   const isHeaderReady = isClient && gameStartedAt > 0;
@@ -64,7 +61,16 @@ export const GamePage = () => {
   const hasSeenTutorial = useHasSeenTutorial();
   const showTutorial = isClient && !hasSeenTutorial;
 
-  const [hint, setHint] = useState<Hint | null>(null);
+  // Подсказка относится к партии, в которой её попросили: новая доска приходит из воркера
+  // позже нажатия Restart, и подсказка к старой доске на ней не нужна
+  const [hintRequest, setHintRequest] = useState<{
+    hint: Hint;
+    gameStartedAt: number;
+  } | null>(null);
+  const hint =
+    hintRequest?.gameStartedAt === gameStartedAt ? hintRequest.hint : null;
+  const setHint = (nextHint: Hint | null) =>
+    setHintRequest(nextHint && { hint: nextHint, gameStartedAt });
   // Подписываемся на готовность подсказки, а не на всю доску: иначе страница перерисовывается на каждый ход
   const isHintDone = useGameStateStore(
     (state) =>
@@ -77,7 +83,7 @@ export const GamePage = () => {
   // Выполненную подсказку даём рассмотреть и убираем
   useEffect(() => {
     if (!isHintDone) return;
-    const timeout = setTimeout(() => setHint(null), 900);
+    const timeout = setTimeout(() => setHintRequest(null), 900);
     return () => clearTimeout(timeout);
   }, [isHintDone]);
 
@@ -121,7 +127,7 @@ export const GamePage = () => {
   return (
     // В альбомной ориентации телефона: доска слева на всю высоту, остальное колонкой справа
     <main className="flex w-[22.375rem] max-w-full flex-col items-stretch gap-4 landscape-short:grid landscape-short:w-[46.25rem] landscape-short:grid-cols-2 landscape-short:grid-rows-[auto_auto_1fr_auto] landscape-short:gap-x-6">
-      {/* Три колонки, чтобы номер с таймером стоял ровно по центру при разном числе кнопок по краям */}
+      {/* Три колонки, чтобы таймер стоял ровно по центру при разном числе кнопок по краям */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center text-[0.8125rem] font-bold tracking-[0.14em] text-haze landscape-short:col-start-2 landscape-short:row-start-1">
         <div className="flex gap-2">
           {!showTutorial && (
@@ -137,21 +143,13 @@ export const GamePage = () => {
         {showTutorial ? (
           <span className="uppercase">How to play</span>
         ) : (
-          <div
-            className={cn(
-              "flex items-center gap-2.5 tabular-nums",
-              !isHeaderReady && "invisible",
-            )}
-          >
-            <span>
-              #{String(isHeaderReady ? puzzleNumber : 0).padStart(4, "0")}
-            </span>
+          <div className={cn("tabular-nums", !isHeaderReady && "invisible")}>
             {showTimer && <Timer key={gameStartedAt} />}
           </div>
         )}
         <div className="flex justify-end gap-2">
           <GameInstructions />
-          <SettingsMenu />
+          <SettingsMenu onBoardSizeChange={handleRestartClick} />
         </div>
       </div>
 

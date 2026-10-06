@@ -77,6 +77,22 @@ const STEPS: TutorialStep[] = [
     ],
   },
   {
+    title: "Think ahead",
+    text: (
+      <>
+        Imagine a <Sun /> here. That's the row's third <Sun />, so both empty
+        cells would be <Moon />: three <Moon /> in a row. So it is a <Moon />.
+        Tap it once.
+      </>
+    ),
+    targets: [[3, 0]],
+    clues: [
+      [3, 3],
+      [3, 4],
+      [3, 5],
+    ],
+  },
+  {
     title: "No twins",
     text: (
       <>
@@ -86,15 +102,15 @@ const STEPS: TutorialStep[] = [
       </>
     ),
     targets: [
-      [1, 3],
-      [1, 4],
+      [3, 1],
+      [3, 2],
     ],
     clues: [
       ...SOLUTION[0].map((_, col): Cell => [0, col]),
-      [1, 0],
-      [1, 1],
-      [1, 2],
-      [1, 5],
+      [3, 0],
+      [3, 3],
+      [3, 4],
+      [3, 5],
     ],
   },
   {

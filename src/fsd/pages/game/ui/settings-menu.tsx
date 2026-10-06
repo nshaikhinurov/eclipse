@@ -1,5 +1,10 @@
-import { Clock, Settings2, type LucideIcon } from "lucide-react";
-import { useSettingsStore, useShouldDisplayTimer } from "~/fsd/app/stores";
+import { Clock, Grid3x3, Settings2, type LucideIcon } from "lucide-react";
+import {
+  useBoardSize,
+  useSettingsStore,
+  useShouldDisplayTimer,
+} from "~/fsd/app/stores";
+import { cn } from "~/fsd/shared/lib/utils";
 import { buttonVariants } from "~/fsd/shared/ui/button";
 import {
   DropdownMenu,
@@ -9,6 +14,10 @@ import {
   DropdownMenuTrigger,
 } from "~/fsd/shared/ui/dropdown-menu";
 import { Switch } from "~/fsd/shared/ui/switch";
+import { BOARD_SIZES, type BoardSize } from "../model";
+
+// Радиус рамки минус её border и padding — углы идут концентрично
+const itemClassName = "rounded-[calc(var(--radius-2xl)-var(--spacing)-1px)]";
 
 type ToggleItemProps = {
   icon: LucideIcon;
@@ -28,8 +37,7 @@ const ToggleItem = ({
   <DropdownMenuItem
     role="menuitemcheckbox"
     aria-checked={checked}
-    // Радиус рамки минус её border и padding — углы идут концентрично
-    className="rounded-[calc(var(--radius-2xl)-var(--spacing)-1px)]"
+    className={itemClassName}
     onSelect={(e: Event) => {
       e.preventDefault();
       onToggle();
@@ -47,7 +55,52 @@ const ToggleItem = ({
   </DropdownMenuItem>
 );
 
-export const SettingsMenu = () => {
+// Каждый сегмент — отдельный пункт меню, как вкладка: клик выбирает именно его размер.
+// Пункты, а не кнопки — иначе Radix не даст дойти до них с клавиатуры
+const BoardSizeItem = ({ onChange }: { onChange: () => void }) => {
+  const boardSize = useBoardSize();
+
+  const handleSelect = (e: Event, size: BoardSize) => {
+    e.preventDefault();
+    if (size === boardSize) return;
+    useSettingsStore.getState().setBoardSize(size);
+    onChange();
+  };
+
+  return (
+    <div className="flex items-center gap-2 px-4 py-3 text-sm">
+      <Grid3x3 className="size-4 shrink-0 text-muted-foreground" />
+      <span className="grow whitespace-nowrap">Board size</span>
+      <DropdownMenuGroup
+        aria-label="Board size"
+        className="flex rounded-full bg-input p-0.5 text-xs font-medium tabular-nums"
+      >
+        {BOARD_SIZES.map((size) => (
+          <DropdownMenuItem
+            key={size}
+            role="menuitemradio"
+            aria-checked={size === boardSize}
+            className={cn(
+              "rounded-full px-2 py-0.5 text-xs transition-colors",
+              size === boardSize &&
+                "bg-primary text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+            )}
+            onSelect={(e: Event) => handleSelect(e, size)}
+          >
+            {size}×{size}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuGroup>
+    </div>
+  );
+};
+
+export const SettingsMenu = ({
+  onBoardSizeChange,
+}: {
+  // Доска другого размера — это новая партия
+  onBoardSizeChange: () => void;
+}) => {
   const shouldDisplayTimer = useShouldDisplayTimer();
   const toggleTimerDisplay = useSettingsStore(
     (state) => state.toggleTimerDisplay,
@@ -61,7 +114,7 @@ export const SettingsMenu = () => {
       >
         <Settings2 />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 rounded-2xl">
+      <DropdownMenuContent align="end" className="w-72 rounded-2xl">
         <DropdownMenuGroup>
           <ToggleItem
             icon={Clock}
@@ -69,6 +122,7 @@ export const SettingsMenu = () => {
             checked={shouldDisplayTimer}
             onToggle={toggleTimerDisplay}
           />
+          <BoardSizeItem onChange={onBoardSizeChange} />
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>

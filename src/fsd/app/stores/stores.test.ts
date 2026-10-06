@@ -1,9 +1,10 @@
 import { act, renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
-import { generateBoard } from "~/fsd/pages/game/model";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { generateGame } from "~/fsd/pages/game/model";
 import {
   getCurrentBoard,
   isGameFinished,
+  restartGame,
   useGameFinishSubscription,
   useGameMetaStore,
   useGameStateStore,
@@ -12,8 +13,9 @@ import {
 
 // Reset all stores before each test
 beforeEach(() => {
-  const emptyBoard = generateBoard();
+  const { puzzle: emptyBoard, solution } = generateGame();
   useGameStateStore.setState({
+    solution,
     boardHistory: {
       ids: [1],
       entities: { 1: emptyBoard },
@@ -135,5 +137,24 @@ describe("Cross-store interactions", () => {
     expect(isGameFinished(useGameStateStore.getState())).toBe(true);
     expect(useGameMetaStore.getState().gameFinishedAt).toBeGreaterThan(0);
     unmount();
+  });
+});
+
+describe("restartGame", () => {
+  it("starts a game of the chosen size once it is generated", async () => {
+    useSettingsStore.setState({ boardSize: 8 });
+    const startedBefore = useGameMetaStore.getState().gameStartedAt;
+    // Повторный вызов, пока подбор идёт, не заказывает вторую партию
+    restartGame();
+    restartGame();
+
+    await vi.waitFor(() =>
+      expect(useGameMetaStore.getState().gameStartedAt).toBeGreaterThan(
+        startedBefore,
+      ),
+    );
+    const state = useGameStateStore.getState();
+    expect(getCurrentBoard(state)).toHaveLength(8);
+    expect(state.boardHistory.ids).toEqual([1]);
   });
 });

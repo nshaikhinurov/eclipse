@@ -48,28 +48,6 @@ export function splitEvery<T>(n: number, a: T[]): T[][] {
 }
 
 /**
- * Разбивает строку на подстроки длиной `n` символов.
- * Последняя подстрока может быть короче, если символов недостаточно.
- *
- * @param {number} n Количество символов в каждой подстроке. Должно быть больше 0.
- * @param {string} s Исходная строка.
- * @returns {string[]} Массив подстрок длиной до `n` символов.
- * @throws {Error} Если `n` меньше или равно 0.
- *
- * @example
- * splitEveryString(3, "abcdefg"); // ["abc", "def", "g"]
- */
-export function splitStringEvery(n: number, s: string): string[] {
-  if (n <= 0) throw new Error("n must be greater than 0");
-
-  const result: string[] = [];
-  for (let i = 0; i < s.length; i += n) {
-    result.push(s.slice(i, i + n));
-  }
-  return result;
-}
-
-/**
  * Генерирует все перестановки массива элементов в лексикографическом порядке.
  * @param arr Массив элементов
  * @returns Массив всех перестановок
@@ -95,30 +73,6 @@ export function permutations<T>(arr: T[]): T[][] {
     }
     result.push([...tempArr]);
   }
-  return result;
-}
-
-/**
- * Генерирует все размещения без повторений (вариации) из n элементов по k мест.
- * @param elements Массив элементов
- * @param k Размер размещения
- * @returns Массив всех размещений
- */
-export function arrangements<T>(elements: T[], k: number): T[][] {
-  const result: T[][] = [];
-  function backtrack(current: T[], remaining: T[]) {
-    if (current.length === k) {
-      result.push([...current]);
-      return;
-    }
-    for (let i = 0; i < remaining.length; i++) {
-      backtrack(
-        [...current, remaining[i]],
-        [...remaining.slice(0, i), ...remaining.slice(i + 1)],
-      );
-    }
-  }
-  if (k > 0 && k <= elements.length) backtrack([], elements);
   return result;
 }
 

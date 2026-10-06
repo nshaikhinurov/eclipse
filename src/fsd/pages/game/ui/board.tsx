@@ -5,6 +5,13 @@ import { hasCell, type Hint } from "../model";
 import { CellComponent, type CellHintRole } from "./cell-component";
 import { countTaps } from "./tap-hand";
 
+// Чем больше клеток, тем уже зазоры и поля доски — иначе на телефоне сами клетки слишком мельчают
+const layoutClassNames: Record<number, { board: string; grid: string }> = {
+  6: { board: "p-3.5", grid: "grid-cols-6 grid-rows-6 gap-2.25" },
+  8: { board: "p-3.5", grid: "grid-cols-8 grid-rows-8 gap-1.5" },
+  10: { board: "p-2.5", grid: "grid-cols-10 grid-rows-10 gap-1" },
+};
+
 export const Board = ({
   className,
   hint,
@@ -41,11 +48,12 @@ export const Board = ({
   return (
     <div
       className={cn(
-        "rounded-[1.625rem] border border-lilac/14 bg-white/[0.035] p-3.5",
+        "rounded-[1.625rem] border border-lilac/14 bg-white/[0.035]",
+        layoutClassNames[size]?.board,
         className,
       )}
     >
-      <div className="grid aspect-square grid-cols-6 grid-rows-6 gap-2.25">
+      <div className={cn("grid aspect-square", layoutClassNames[size]?.grid)}>
         {cells.map((value, index) => {
           const row = Math.floor(index / size);
           const col = index % size;

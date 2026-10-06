@@ -32,25 +32,19 @@ export const useGameMetaStore = create<GameMetaState>()(
   })),
 );
 
-// Hook to set up game finish detection
+// Hook to set up game finish detection.
+// Читаем стор хуком, а не ручной подпиской: при горячей перезагрузке сторы создаются заново,
+// и подписка из эффекта с пустыми зависимостями осталась бы на старом сторе
 export const useGameFinishSubscription = () => {
+  const finished = useGameStateStore(isGameFinished);
+
   useEffect(() => {
-    let prevFinished = false;
-
-    const unsubscribe = useGameStateStore.subscribe((state) => {
-      const finished = isGameFinished(state);
-      const metaState = useGameMetaStore.getState();
-
-      // Only update when the game transitions to finished state
-      if (finished && !prevFinished && metaState.gameFinishedAt === 0) {
-        metaState.finishGame();
-      }
-
-      prevFinished = finished;
-    });
-
-    return unsubscribe;
-  }, []);
+    const metaState = useGameMetaStore.getState();
+    // Only update when the game transitions to finished state
+    if (finished && metaState.gameFinishedAt === 0) {
+      metaState.finishGame();
+    }
+  }, [finished]);
 };
 
 export const isGameActive = (state: GameMetaState) => {

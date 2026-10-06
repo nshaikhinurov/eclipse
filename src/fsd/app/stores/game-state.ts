@@ -2,16 +2,16 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import {
   Board,
+  createEmptyBoard,
   findHint,
-  generateBoard,
   getNextValue,
   isValidSolution,
-  pickRandomPuzzleNumber,
-  solve,
+  type Solution,
 } from "~/fsd/pages/game/model";
+import { type Game } from "~/fsd/pages/game/game-generator";
 
 type GameState = {
-  puzzleNumber: number;
+  solution: Solution;
   boardHistory: {
     ids: number[];
     entities: Record<number, Board | undefined>;
@@ -21,27 +21,26 @@ type GameState = {
   cellRestored: () => void;
   boardCleared: () => void;
   boardSolved: () => void;
-  resetGame: (initialBoard?: Board) => void;
+  resetGame: (game: Game) => void;
 };
 
 // Helper function to generate initial game state
-const createInitialState = (initialBoard?: Board) => {
-  const puzzleNumber = pickRandomPuzzleNumber();
-  return {
-    puzzleNumber,
-    boardHistory: {
-      ids: [1],
-      entities: {
-        1: initialBoard || generateBoard(puzzleNumber),
-      } as Record<number, Board | undefined>,
-    },
-  };
-};
+const createInitialState = ({ puzzle: initialBoard, solution }: Game) => ({
+  solution,
+  boardHistory: {
+    ids: [1],
+    entities: {
+      1: initialBoard,
+    } as Record<number, Board | undefined>,
+  },
+});
 
 // Create the game state store
 export const useGameStateStore = create<GameState>()(
   immer((set) => ({
-    ...createInitialState(),
+    // Размер доски лежит в localStorage — сервер его не знает. До старта партии на клиенте
+    // держим пустую доску размера по умолчанию, чтобы гидратация совпала
+    ...createInitialState({ puzzle: createEmptyBoard(6), solution: [] }),
 
     cellClicked: (cellId: number) => {
       set((state) => {
@@ -108,19 +107,19 @@ export const useGameStateStore = create<GameState>()(
         }
 
         const currentBoardId = state.boardHistory.ids.at(-1);
-        const initialBoard = state.boardHistory.entities[1];
 
-        if (!initialBoard || currentBoardId === undefined) {
+        if (currentBoardId === undefined) {
           return;
         }
-        const [solvedBoard] = solve(initialBoard);
         state.boardHistory.ids.push(currentBoardId + 1);
-        state.boardHistory.entities[currentBoardId + 1] = solvedBoard;
+        state.boardHistory.entities[currentBoardId + 1] = state.solution.map(
+          (line) => [...line],
+        );
       });
     },
 
-    resetGame: (initialBoard?: Board) => {
-      set(createInitialState(initialBoard));
+    resetGame: (game: Game) => {
+      set(createInitialState(game));
     },
   })),
 );
@@ -150,13 +149,10 @@ export const isGameFinished = (state: GameState) => {
     : false;
 };
 
-// Подсказка для текущей доски; решение ищем только по запросу — это перебор
+// Подсказка для текущей доски
 export const getHint = (state: GameState) => {
   const currentBoard = getCurrentBoard(state);
-  const initialBoard = state.boardHistory.entities[1];
-  if (!currentBoard || !initialBoard) return null;
-  const [solution] = solve(initialBoard);
-  return solution ? findHint(currentBoard, solution) : null;
+  return currentBoard ? findHint(currentBoard, state.solution) : null;
 };
 
 export const canUndo = (state: GameState) => {
@@ -169,5 +165,3 @@ export const useCell = (cellId: number) =>
   useGameStateStore((state) => getCell(state, cellId));
 export const useIsGameFinished = () => useGameStateStore(isGameFinished);
 export const useCanUndo = () => useGameStateStore(canUndo);
-export const usePuzzleNumber = () =>
-  useGameStateStore((state) => state.puzzleNumber);
